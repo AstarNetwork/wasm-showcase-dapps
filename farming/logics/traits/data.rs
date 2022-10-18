@@ -11,7 +11,7 @@ use scale::{
 
 pub const STORAGE_KEY: u32 = openbrush::storage_unique_key!(Data);
 
-#[derive(Encode, Decode, SpreadLayout, PackedLayout, SpreadAllocate, Default)]
+#[derive(Encode, Decode, SpreadLayout, PackedLayout, SpreadAllocate, Default, Clone)]
 #[cfg_attr(
     feature = "std",
     derive(Debug, PartialEq, Eq, scale_info::TypeInfo, StorageLayout)
@@ -20,6 +20,22 @@ pub struct Pool {
     pub acc_arsw_per_share: u128,
     pub last_reward_block: u32,
     pub alloc_point: u64,
+}
+
+impl PackedAllocate for Pool {
+    fn allocate_packed(&mut self, at: &ink_primitives::Key) {
+        match self {
+            Pool {
+                acc_arsw_per_share: elem_0,
+                last_reward_block: elem_1,
+                alloc_point: elem_2
+            } => {
+                PackedAllocate::allocate_packed(elem_0, at);
+                PackedAllocate::allocate_packed(elem_1, at);
+                PackedAllocate::allocate_packed(elem_2, at);
+            }
+        }
+    }
 }
 
 #[derive(Default, Debug)]
@@ -35,12 +51,11 @@ pub struct Data {
     /// `reward_debt` The amount of ARSW entitled to the user.
     pub user_info: Mapping<(u32, AccountId), (u128, i128)>,
 
-    /// Info of each MasterChef pool.
-    /// Key `pool_id`: u32
-    /// Value Pool (`acc_arsw_per_share`: u128, `last_reward_block`: u32, `alloc_point`: u64 )
+    /// Info of each MasterChef pools.
+    /// Values Pool (`acc_arsw_per_share`: u128, `last_reward_block`: u32, `alloc_point`: u64 )
     /// `alloc_point` The amount of allocation points assigned to the pool.
     /// Also known as the amount of ARSW to distribute per block.
-    pub pool_info: Mapping<u32, Pool>,
+    pub pool_infos: Vec<Pool>,
     pub pool_info_length: u32,
 
     /// Address of the LP token for each MasterChef pool.

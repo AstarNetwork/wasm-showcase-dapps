@@ -14,7 +14,7 @@ pub trait FarmingGetters: Storage<Data> {
 
     #[ink(message)]
     fn get_pool_infos(&self, pool_id: u32) -> Option<Pool> {
-        self.data::<Data>().pool_info.get(&pool_id)
+        self.data::<Data>().pool_infos.get(pool_id as usize).cloned()
     }
 
     #[ink(message)]

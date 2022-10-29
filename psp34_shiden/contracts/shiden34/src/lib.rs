@@ -176,20 +176,12 @@ pub mod shiden34 {
 
         /// Get URI from token ID
         #[ink(message)]
-<<<<<<< HEAD
         fn token_uri(&self, token_id: u64) -> Result<String, PSP34Error> {
             _ = self.token_exists(Id::U64(token_id))?;
             let value = self.get_attribute(Id::U8(0), String::from("baseUri").into_bytes());
             let mut token_uri = String::from_utf8(value.unwrap()).unwrap();
             token_uri = token_uri + &token_id.to_string() + &String::from(".json");
             Ok(token_uri)
-=======
-        pub fn token_uri(&self, token_id: u32) -> String {
-            let value = self.get_attribute(Id::U8(0), String::from("baseUri").into_bytes());
-            let mut token_uri = String::from_utf8(value.unwrap()).unwrap();
-            token_uri = token_uri + &token_id.to_string() + &String::from(".json");
-            return token_uri
->>>>>>> ecb87a9... test eror cases
         }
 
         /// Get max supply of tokens
@@ -198,7 +190,6 @@ pub mod shiden34 {
             self.max_supply
         }
 
-<<<<<<< HEAD
         /// Get max supply of tokens
         #[ink(message)]
         #[modifiers(only_owner)]
@@ -210,25 +201,6 @@ pub mod shiden34 {
             self.env()
                 .transfer(self.owner(), current_balance)
                 .map_err(|_| PSP34Error::Custom("WithdrawFailed".to_string()))?;
-=======
-        /// Check id the transfered mint values is as expected
-        fn check_value(&self, mint_amount: u64) -> Result<(), PSP34Error> {
-            if Self::env().transferred_value() != mint_amount as u128 * self.price_per_mint {
-                return Err(PSP34Error::Custom("BadMintValue".to_string()))
-            }
-            Ok(())
-        }
-
-        /// Check amount of tokens to be minted
-        fn check_amount(&self, mint_amount: u64) -> Result<(), PSP34Error> {
-            if mint_amount == 0 {
-                return Err(PSP34Error::Custom("CannotMintZeroTokens".to_string()))
-            }
-
-            if self.last_token_id + mint_amount > self.max_supply {
-                return Err(PSP34Error::Custom("CollectionFullOrLocked".to_string()))
-            }
->>>>>>> ecb87a9... test eror cases
             Ok(())
         }
     }
@@ -283,18 +255,9 @@ pub mod shiden34 {
             test::set_value_transferred::<ink_env::DefaultEnvironment>(PRICE);
             assert!(sh34.mint_next().is_ok());
             assert_eq!(sh34.total_supply(), 1);
-<<<<<<< HEAD
             assert_eq!(sh34.owner_of(Id::U64(1)), Some(accounts.bob));
             assert_eq!(sh34.balance_of(accounts.bob), 1);
             assert_eq!(sh34.owners_token_by_index(accounts.bob, 0), Ok(Id::U64(1)));
-=======
-            assert_eq!(sh34.owner_of(Id::U64(1)), Some(accounts.alice));
-            assert_eq!(sh34.balance_of(accounts.alice), 1);
-            assert_eq!(
-                sh34.owners_token_by_index(accounts.alice, 0),
-                Ok(Id::U64(1))
-            );
->>>>>>> ecb87a9... test eror cases
             assert_eq!(sh34.last_token_id, 1);
         }
 
@@ -344,11 +307,7 @@ pub mod shiden34 {
         fn mint_low_value_fails() {
             let mut sh34 = init();
             let accounts = default_accounts();
-<<<<<<< HEAD
             set_sender(accounts.bob);
-=======
-            set_sender(accounts.alice);
->>>>>>> ecb87a9... test eror cases
             let num_of_mints = 1;
 
             assert_eq!(sh34.total_supply(), 0);
@@ -359,14 +318,11 @@ pub mod shiden34 {
                 sh34.mint_for(accounts.bob, num_of_mints),
                 Err(Custom("BadMintValue".to_string()))
             );
-<<<<<<< HEAD
             test::set_value_transferred::<ink_env::DefaultEnvironment>(
                 PRICE * num_of_mints as u128 - 1,
             );
             assert_eq!(sh34.mint_next(), Err(Custom("BadMintValue".to_string())));
             assert_eq!(sh34.total_supply(), 0);
-=======
->>>>>>> ecb87a9... test eror cases
         }
 
         #[ink::test]

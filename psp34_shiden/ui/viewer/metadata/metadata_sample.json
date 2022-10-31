@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0xbbba7f658ef467c417b91762c22b783995aef3cb61aadc5cb7c67a8151f4f632",
+    "hash": "0x8f215d99a8e26ce07b0d0999621a526888a09d5e4fda037f548c4a96d31bc89c",
     "language": "ink! 3.3.1",
     "compiler": "rustc 1.64.0-nightly"
   },
@@ -74,138 +74,6 @@
         {
           "args": [
             {
-              "label": "operator",
-              "type": {
-                "displayName": [
-                  "psp34_external",
-                  "ApproveInput1"
-                ],
-                "type": 8
-              }
-            },
-            {
-              "label": "id",
-              "type": {
-                "displayName": [
-                  "psp34_external",
-                  "ApproveInput2"
-                ],
-                "type": 14
-              }
-            },
-            {
-              "label": "approved",
-              "type": {
-                "displayName": [
-                  "psp34_external",
-                  "ApproveInput3"
-                ],
-                "type": 27
-              }
-            }
-          ],
-          "docs": [
-            " Approves `operator` to withdraw the `id` token from the caller's account.",
-            " If `id` is `None` approves or disapproves the operator for all tokens of the caller.",
-            "",
-            " On success a `Approval` event is emitted.",
-            "",
-            " # Errors",
-            "",
-            " Returns `SelfApprove` error if it is self approve.",
-            "",
-            " Returns `NotApproved` error if caller is not owner of `id`."
-          ],
-          "label": "PSP34::approve",
-          "mutates": true,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "psp34_external",
-              "ApproveOutput"
-            ],
-            "type": 28
-          },
-          "selector": "0x1932a8b0"
-        },
-        {
-          "args": [
-            {
-              "label": "owner",
-              "type": {
-                "displayName": [
-                  "psp34_external",
-                  "BalanceOfInput1"
-                ],
-                "type": 8
-              }
-            }
-          ],
-          "docs": [
-            " Returns the balance of the owner.",
-            "",
-            " This represents the amount of unique tokens the owner has."
-          ],
-          "label": "PSP34::balance_of",
-          "mutates": false,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "psp34_external",
-              "BalanceOfOutput"
-            ],
-            "type": 4
-          },
-          "selector": "0xcde7e55f"
-        },
-        {
-          "args": [],
-          "docs": [
-            " Returns current NFT total supply."
-          ],
-          "label": "PSP34::total_supply",
-          "mutates": false,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "psp34_external",
-              "TotalSupplyOutput"
-            ],
-            "type": 6
-          },
-          "selector": "0x628413fe"
-        },
-        {
-          "args": [
-            {
-              "label": "id",
-              "type": {
-                "displayName": [
-                  "psp34_external",
-                  "OwnerOfInput1"
-                ],
-                "type": 1
-              }
-            }
-          ],
-          "docs": [
-            " Returns the owner of the token if any."
-          ],
-          "label": "PSP34::owner_of",
-          "mutates": false,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "psp34_external",
-              "OwnerOfOutput"
-            ],
-            "type": 19
-          },
-          "selector": "0x1168624d"
-        },
-        {
-          "args": [
-            {
               "label": "to",
               "type": {
                 "displayName": [
@@ -257,7 +125,7 @@
               "psp34_external",
               "TransferOutput"
             ],
-            "type": 28
+            "type": 27
           },
           "selector": "0x3128d61b"
         },
@@ -279,6 +147,36 @@
             "type": 1
           },
           "selector": "0xffa27a5f"
+        },
+        {
+          "args": [
+            {
+              "label": "owner",
+              "type": {
+                "displayName": [
+                  "psp34_external",
+                  "BalanceOfInput1"
+                ],
+                "type": 8
+              }
+            }
+          ],
+          "docs": [
+            " Returns the balance of the owner.",
+            "",
+            " This represents the amount of unique tokens the owner has."
+          ],
+          "label": "PSP34::balance_of",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "psp34_external",
+              "BalanceOfOutput"
+            ],
+            "type": 4
+          },
+          "selector": "0xcde7e55f"
         },
         {
           "args": [
@@ -325,38 +223,111 @@
               "psp34_external",
               "AllowanceOutput"
             ],
-            "type": 27
+            "type": 29
           },
           "selector": "0x4790f55a"
         },
         {
           "args": [
             {
-              "label": "index",
+              "label": "operator",
               "type": {
                 "displayName": [
-                  "psp34enumerable_external",
-                  "TokenByIndexInput1"
+                  "psp34_external",
+                  "ApproveInput1"
                 ],
-                "type": 6
+                "type": 8
+              }
+            },
+            {
+              "label": "id",
+              "type": {
+                "displayName": [
+                  "psp34_external",
+                  "ApproveInput2"
+                ],
+                "type": 14
+              }
+            },
+            {
+              "label": "approved",
+              "type": {
+                "displayName": [
+                  "psp34_external",
+                  "ApproveInput3"
+                ],
+                "type": 29
               }
             }
           ],
           "docs": [
-            " Returns a token `Id` at a given `index` of all the tokens stored by the contract.",
-            " Use along with `total_supply` to enumerate all tokens."
+            " Approves `operator` to withdraw the `id` token from the caller's account.",
+            " If `id` is `None` approves or disapproves the operator for all tokens of the caller.",
+            "",
+            " On success a `Approval` event is emitted.",
+            "",
+            " # Errors",
+            "",
+            " Returns `SelfApprove` error if it is self approve.",
+            "",
+            " Returns `NotApproved` error if caller is not owner of `id`."
           ],
-          "label": "PSP34Enumerable::token_by_index",
+          "label": "PSP34::approve",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "psp34_external",
+              "ApproveOutput"
+            ],
+            "type": 27
+          },
+          "selector": "0x1932a8b0"
+        },
+        {
+          "args": [],
+          "docs": [
+            " Returns current NFT total supply."
+          ],
+          "label": "PSP34::total_supply",
           "mutates": false,
           "payable": false,
           "returnType": {
             "displayName": [
-              "psp34enumerable_external",
-              "TokenByIndexOutput"
+              "psp34_external",
+              "TotalSupplyOutput"
             ],
-            "type": 30
+            "type": 6
           },
-          "selector": "0xcd0340d0"
+          "selector": "0x628413fe"
+        },
+        {
+          "args": [
+            {
+              "label": "id",
+              "type": {
+                "displayName": [
+                  "psp34_external",
+                  "OwnerOfInput1"
+                ],
+                "type": 1
+              }
+            }
+          ],
+          "docs": [
+            " Returns the owner of the token if any."
+          ],
+          "label": "PSP34::owner_of",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "psp34_external",
+              "OwnerOfOutput"
+            ],
+            "type": 19
+          },
+          "selector": "0x1168624d"
         },
         {
           "args": [
@@ -400,6 +371,35 @@
         {
           "args": [
             {
+              "label": "index",
+              "type": {
+                "displayName": [
+                  "psp34enumerable_external",
+                  "TokenByIndexInput1"
+                ],
+                "type": 6
+              }
+            }
+          ],
+          "docs": [
+            " Returns a token `Id` at a given `index` of all the tokens stored by the contract.",
+            " Use along with `total_supply` to enumerate all tokens."
+          ],
+          "label": "PSP34Enumerable::token_by_index",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "psp34enumerable_external",
+              "TokenByIndexOutput"
+            ],
+            "type": 30
+          },
+          "selector": "0xcd0340d0"
+        },
+        {
+          "args": [
+            {
               "label": "id",
               "type": {
                 "displayName": [
@@ -438,23 +438,6 @@
           "selector": "0xf19d48d1"
         },
         {
-          "args": [],
-          "docs": [
-            " Returns the address of the current owner."
-          ],
-          "label": "Ownable::owner",
-          "mutates": false,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "ownable_external",
-              "OwnerOutput"
-            ],
-            "type": 8
-          },
-          "selector": "0x4fa43c8c"
-        },
-        {
           "args": [
             {
               "label": "new_owner",
@@ -490,6 +473,23 @@
             "type": 32
           },
           "selector": "0x11f43efd"
+        },
+        {
+          "args": [],
+          "docs": [
+            " Returns the address of the current owner."
+          ],
+          "label": "Ownable::owner",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "ownable_external",
+              "OwnerOutput"
+            ],
+            "type": 8
+          },
+          "selector": "0x4fa43c8c"
         },
         {
           "args": [],
@@ -552,88 +552,9 @@
               "psp34mintable_external",
               "MintOutput"
             ],
-            "type": 28
+            "type": 27
           },
           "selector": "0x6c41f2ec"
-        },
-        {
-          "args": [],
-          "docs": [
-            " Get max supply of tokens"
-          ],
-          "label": "Shiden34Trait::max_supply",
-          "mutates": false,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "shiden34trait_external",
-              "MaxSupplyOutput"
-            ],
-            "type": 5
-          },
-          "selector": "0x622ed8e9"
-        },
-        {
-          "args": [],
-          "docs": [
-            " Get max supply of tokens"
-          ],
-          "label": "Shiden34Trait::withdraw",
-          "mutates": true,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "shiden34trait_external",
-              "WithdrawOutput"
-            ],
-            "type": 28
-          },
-          "selector": "0xb5405681"
-        },
-        {
-          "args": [],
-          "docs": [
-            " Mint next available token for the caller"
-          ],
-          "label": "Shiden34Trait::mint_next",
-          "mutates": true,
-          "payable": true,
-          "returnType": {
-            "displayName": [
-              "shiden34trait_external",
-              "MintNextOutput"
-            ],
-            "type": 28
-          },
-          "selector": "0xae0978d0"
-        },
-        {
-          "args": [
-            {
-              "label": "uri",
-              "type": {
-                "displayName": [
-                  "shiden34trait_external",
-                  "SetBaseUriInput1"
-                ],
-                "type": 26
-              }
-            }
-          ],
-          "docs": [
-            " Set new value for the baseUri"
-          ],
-          "label": "Shiden34Trait::set_base_uri",
-          "mutates": true,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "shiden34trait_external",
-              "SetBaseUriOutput"
-            ],
-            "type": 28
-          },
-          "selector": "0xdcf96e02"
         },
         {
           "args": [
@@ -669,9 +590,43 @@
               "shiden34trait_external",
               "MintForOutput"
             ],
-            "type": 28
+            "type": 27
           },
           "selector": "0x156e41a4"
+        },
+        {
+          "args": [],
+          "docs": [
+            " Get max supply of tokens"
+          ],
+          "label": "Shiden34Trait::withdraw",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "shiden34trait_external",
+              "WithdrawOutput"
+            ],
+            "type": 27
+          },
+          "selector": "0xb5405681"
+        },
+        {
+          "args": [],
+          "docs": [
+            " Mint next available token for the caller"
+          ],
+          "label": "Shiden34Trait::mint_next",
+          "mutates": true,
+          "payable": true,
+          "returnType": {
+            "displayName": [
+              "shiden34trait_external",
+              "MintNextOutput"
+            ],
+            "type": 27
+          },
+          "selector": "0xae0978d0"
         },
         {
           "args": [
@@ -700,6 +655,51 @@
             "type": 34
           },
           "selector": "0x06118780"
+        },
+        {
+          "args": [
+            {
+              "label": "uri",
+              "type": {
+                "displayName": [
+                  "shiden34trait_external",
+                  "SetBaseUriInput1"
+                ],
+                "type": 26
+              }
+            }
+          ],
+          "docs": [
+            " Set new value for the baseUri"
+          ],
+          "label": "Shiden34Trait::set_base_uri",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "shiden34trait_external",
+              "SetBaseUriOutput"
+            ],
+            "type": 27
+          },
+          "selector": "0xdcf96e02"
+        },
+        {
+          "args": [],
+          "docs": [
+            " Get max supply of tokens"
+          ],
+          "label": "Shiden34Trait::max_supply",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "shiden34trait_external",
+              "MaxSupplyOutput"
+            ],
+            "type": 5
+          },
+          "selector": "0x622ed8e9"
         }
       ]
     },
@@ -1446,14 +1446,6 @@
         "id": 27,
         "type": {
           "def": {
-            "primitive": "bool"
-          }
-        }
-      },
-      {
-        "id": 28,
-        "type": {
-          "def": {
             "variant": {
               "variants": [
                 {
@@ -1468,7 +1460,7 @@
                 {
                   "fields": [
                     {
-                      "type": 29
+                      "type": 28
                     }
                   ],
                   "index": 1,
@@ -1484,7 +1476,7 @@
             },
             {
               "name": "E",
-              "type": 29
+              "type": 28
             }
           ],
           "path": [
@@ -1493,7 +1485,7 @@
         }
       },
       {
-        "id": 29,
+        "id": 28,
         "type": {
           "def": {
             "variant": {
@@ -1547,6 +1539,14 @@
         }
       },
       {
+        "id": 29,
+        "type": {
+          "def": {
+            "primitive": "bool"
+          }
+        }
+      },
+      {
         "id": 30,
         "type": {
           "def": {
@@ -1564,7 +1564,7 @@
                 {
                   "fields": [
                     {
-                      "type": 29
+                      "type": 28
                     }
                   ],
                   "index": 1,
@@ -1580,7 +1580,7 @@
             },
             {
               "name": "E",
-              "type": 29
+              "type": 28
             }
           ],
           "path": [
@@ -1707,7 +1707,7 @@
                 {
                   "fields": [
                     {
-                      "type": 29
+                      "type": 28
                     }
                   ],
                   "index": 1,
@@ -1723,7 +1723,7 @@
             },
             {
               "name": "E",
-              "type": 29
+              "type": 28
             }
           ],
           "path": [

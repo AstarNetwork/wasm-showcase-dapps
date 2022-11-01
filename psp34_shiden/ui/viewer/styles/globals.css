@@ -19,6 +19,7 @@ a {
   color: #888888;
 }
 
+/*
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
@@ -28,6 +29,16 @@ a {
     background: #0d1117;
   }
 }
+@media (prefers-color-scheme: light) {
+  html {
+    color-scheme: light;
+  }
+  body {
+    color: #1d2127;
+    background: #ffffff;
+  }
+}
+*/
 
 @tailwind base;
 @tailwind components;

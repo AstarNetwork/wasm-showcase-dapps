@@ -13,7 +13,7 @@ const SampleContractsList = (): JSX.Element => {
   };
 
   return (
-    <div className="text-left max-w-6xl p-2 m-auto mt-5 w-11/12 border-[#323943] bg-[#121923] border border-1 rounded">
+    <div className="text-left max-w-6xl p-2 m-auto mt-5 w-11/12 border-[#d8d2c5] dark:border-[#323943] bg-[#f4efe2] dark:bg-[#121923] border border-1 rounded">
       <h3 className="m-1 text-xl text-center">Sample Contracts</h3>
       <dl role="list" className="m-1 break-all">
         <dt className="m-1 text-xl">Shiden</dt>

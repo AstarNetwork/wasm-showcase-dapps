@@ -172,16 +172,16 @@ const IndexCanvas = () => {
   return (
     <div className="text-center">
       <Header />
-      <div className="p-3 mt-2 m-auto max-w-6xl w-11/12 border-[#323943] bg-[#121923] border border-1 rounded">
+      <div className="p-3 mt-2 m-auto max-w-6xl w-11/12 border-[#d8d2c5] dark:border-[#323943] bg-[#f4efe2] dark:bg-[#121923] border border-1 rounded">
         <div className="mb-5 text-xl">Select blockchain</div>
         <button
-          className="bg-[#184e9b] hover:bg-[#1964cf] hover:duration-500 text-white rounded px-4 py-2"
+          className="bg-[#184e9b] hover:bg-[#2974df] hover:duration-500 text-white rounded px-4 py-2"
           onClick={setup}
         >
           Set Blockchain
         </button>
         <select
-          className="p-3 m-3 mt-0 bg-[#020913] border-2 border-gray-300 rounded"
+          className="p-3 m-3 mt-0 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 dark:border-gray-300 rounded"
           onChange={(event) => {
             setBlockchainName((event.target.value));
           }}
@@ -198,21 +198,20 @@ const IndexCanvas = () => {
         <div className="p-1 m-auto w-11/12 break-all">Last block hash: {lastBlockHash? lastBlockHash : "---"}</div>
       </div>
 
-      <div className="text-left p-2 pt-0 mt-5 m-auto max-w-6xl w-11/12 border-[#323943] bg-[#121923] border border-1 rounded">
-
+      <div className="text-left p-2 pt-0 mt-5 m-auto max-w-6xl w-11/12 border-[#d8d2c5] dark:border-[#323943] bg-[#f4efe2] dark:bg-[#121923] border border-1 rounded">
         <div className="text-center mt-4">
           <div className="mb-3 text-xl">NFT View</div>
           <button disabled={!contractAddress || !tokenId}
-            className="bg-[#184e9b] hover:bg-[#1964cf] hover:duration-500 disabled:bg-stone-700 text-white rounded px-4 py-2"
+            className="bg-[#184e9b] hover:bg-[#2974df] hover:duration-500 disabled:bg-[#a4a095] dark:disabled:bg-stone-700 text-white rounded px-4 py-2"
             onClick={getTokenURI}
           >{contractAddress || tokenId ? 'View NFT' : 'Enter Blank Form'}</button>
           <input
-            className="p-2 m-2 bg-[#020913] border-2 border-gray-300 rounded"
+            className="p-2 m-2 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
             onChange={(event) => setContractAddress(event.target.value)}
             placeholder="ContractAddress"
           />
           <input
-            className="p-2 m-2 w-20 bg-[#020913] border-2 border-gray-300 rounded"
+            className="p-2 m-2 w-20 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
             onChange={(event) => setTokenId(event.target.value)}
             placeholder="TokenID"
           />
@@ -227,7 +226,7 @@ const IndexCanvas = () => {
           </div>
         </div>
 
-        <div className="m-2 mt-4 p-2 bg-[#020913] rounded">
+        <div className="m-2 mt-4 p-2 bg-[#dcd6c8] dark:bg-[#020913] rounded">
           <p className="p-1 m-1 break-all">Result: {result}</p>
           <p className="p-1 m-1 break-all">OutputData: {outcome}</p>
           <p className="p-1 m-1">TokenId: {tokenId}</p>

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
@@ -46,19 +47,32 @@ const IndexCanvas = () => {
   const [outcome, setOutcome] = useState('');
   
   const [tokenImageURI, setTokenImageURI] = useState('');
+  const [ipfsImageURI, setIpfsImageURI] = useState('');
   const [tokenName, setTokenName] = useState('');
   const [tokenDescription, setTokenDescription] = useState('');
   const [subScanUri, setSubScanUri] = useState('');
   const [subScanTitle, setSubScanTitle] = useState('');
 
+  const [ipfsGateway, setIpfsGateway] = useState('');
+  const [actingIpfsGateway, setActingIpfsGateway] = useState('ipfs.io');
+
   useEffect(() => {
-  });
-  
+    setIpfsGateway(actingIpfsGateway);
+  },[]);
+
   async function getTokenURI() {
     if (!blockchainUrl || !block) {
       alert('Please select Blockchain and click "Set Blockchain" button.');
       return;
     }
+
+    setTokenURI('');
+    setTokenImageURI('');
+    setIpfsImageURI('');
+    setTokenName('');
+    setTokenDescription('');
+    setOwnerAddress('');
+
     const contract = new ContractPromise(api, abi, contractAddress);
     const {result, output} = 
       await contract.query['shiden34Trait::tokenUri'](
@@ -82,10 +96,14 @@ const IndexCanvas = () => {
         const url = outputData.inner.toString();
         if (url !== undefined) {
           setTokenURI(url);
-          axios.get(url).then(res => {
+          const matadataUrl = getIpfsGatewayUri(url);
+          axios.get(matadataUrl).then(res => {
             // TokenURI metadata
             console.log(res.data);
-            setTokenImageURI(res.data.image.toString());
+            const imageUrl = res.data.image.toString();
+            let metadataImageUrl = getIpfsGatewayUri(imageUrl);
+            setTokenImageURI(imageUrl);
+            setIpfsImageURI(metadataImageUrl);
             setTokenName(res.data.name.toString());
             setTokenDescription(res.data.description.toString());
           });
@@ -106,6 +124,7 @@ const IndexCanvas = () => {
         setOutcome(outputData.toString());
         setTokenURI('');
         setTokenImageURI('');
+        setIpfsImageURI('');
         setTokenName('');
         setTokenDescription('');
         setOwnerAddress('');
@@ -115,6 +134,7 @@ const IndexCanvas = () => {
       setOutcome('');
       setTokenURI('');
       setTokenImageURI('');
+      setIpfsImageURI('');
       setTokenName('');
       setTokenDescription('');
       setOwnerAddress('');
@@ -169,6 +189,39 @@ const IndexCanvas = () => {
     });
   };
 
+  const saveIpfsGateway = () => {
+    localStorage.setItem("ipfsGateway", ipfsGateway);
+    setActingIpfsGateway(ipfsGateway);
+  };
+
+  const getIpfsGatewayUri = (uri: string) => {
+    if (!uri) {
+      return '';
+    }
+
+    const scheme = uri.slice(0, 7);
+    let cid = '';
+    let fileName = '';
+    if (scheme === 'ipfs://') {
+      let tmp = uri.substr(7);
+      cid = uri.substr(7, tmp.indexOf('/'));
+      fileName = uri.substr(tmp.indexOf('/') + 8);
+      if (actingIpfsGateway === 'ipfs.io') {
+        uri = 'https://ipfs.io/ipfs/' + cid + '/' + fileName;
+      } else if (actingIpfsGateway === 'Crust Network') {
+        uri = 'https://gw.crustapps.net/ipfs/' + cid + '/' + fileName;
+      } else if (actingIpfsGateway === 'cloudflare') {
+        uri = 'https://cloudflare-ipfs.com/ipfs/' + cid + '/' + fileName;
+      //} else if (actingIpfsGateway === 'dweb.link') {
+        //cid = cid.toV1().toString('base32');
+        //cid = cid.toV1().toString('base32');
+        //uri = 'https://' + cid + '.ipfs.dweb.link' + '/' + fileName;
+      }
+    }
+    console.log('ipfs_uri: ', uri);
+    return uri;
+  };
+
   return (
     <div className="text-center">
       <Header />
@@ -219,7 +272,13 @@ const IndexCanvas = () => {
 
         <div className="text-center">
           <div>
-            <img className="p-2 m-auto w-64" src={tokenImageURI} />
+            <div className='h-64 flex justify-center items-center'>
+              {tokenURI ? ipfsImageURI ?
+                <img className="p-2 m-auto h-64 duration-300" src={ipfsImageURI} /> :
+                <img className="h-32 duration-300" src="/loading_default.svg" /> :
+                <img className="h-32 duration-300" src="/image-placeholder.png" />
+              }
+            </div>
             <p className="p-1 m-1 text-xl break-words">{tokenName}</p>
             <p className="p-1 m-1 break-words">{tokenDescription}</p>
             <p className={contractAddress ? "m-1 break-all" : "hidden"}><a className="hover:text-gray-400" target="_blank" rel="noreferrer" href={subScanUri}>{subScanTitle}</a></p>
@@ -235,6 +294,28 @@ const IndexCanvas = () => {
           <p className="p-1 m-1 break-all">OwnerAddress: {ownerAddress}</p>
         </div>
       </div>
+
+      <div className="p-3 mt-5 m-auto max-w-6xl w-11/12 border-[#d8d2c5] dark:border-[#323943] bg-[#f4efe2] dark:bg-[#121923] border border-1 rounded">
+        <div className="mb-5 text-xl">Select ipfs Gateway</div>
+        <button
+          className="bg-[#184e9b] hover:bg-[#2974df] hover:duration-500 text-white rounded px-4 py-2"
+          onClick={saveIpfsGateway}
+        >
+          Set ipfs Gateway
+        </button>
+        <select
+          className="p-3 m-3 mt-0 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 dark:border-gray-300 rounded"
+          onChange={(event) => {
+            setIpfsGateway((event.target.value));
+          }}
+        >
+            <option value="ipfs.io">ipfs.io</option>
+            <option value="cloudflare">Cloudflare</option>
+            <option value="Crust Network">Crust Network</option>
+        </select>
+        <div className="p-2 m-2 mt-0">Current ipfs Gateway: {actingIpfsGateway? actingIpfsGateway : "---"}</div>
+      </div>
+
       <SampleContractsList />
       <Footer />
     </div>

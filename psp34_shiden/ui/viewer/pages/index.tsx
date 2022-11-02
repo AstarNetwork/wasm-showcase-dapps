@@ -3,7 +3,10 @@ import dynamic from 'next/dynamic'
 
 const Canvas = dynamic(() => import('../components/IndexCanvas'), {
   ssr: false,
-  loading: () => <p className="h-screen w-screen flex justify-center items-center">Now Loading...</p>,
+  loading: () => 
+  <p className="h-screen w-screen flex justify-center items-center">
+    <img className="h-20" src="/loading_default.svg" alt="loading" />
+  </p>,
 })
 
 const IndexPage: NextPage = () => {

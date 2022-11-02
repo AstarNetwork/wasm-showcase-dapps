@@ -18,7 +18,6 @@ pub mod shiden34 {
             psp34::extensions::{
                 enumerable::*,
                 metadata::*,
-                mintable::*,
             },
             reentrancy_guard::*,
         },
@@ -52,7 +51,7 @@ pub mod shiden34 {
     impl Ownable for Shiden34Contract {}
 
     #[openbrush::trait_definition]
-    pub trait Shiden34Trait {
+    pub trait PSP34Tradable {
         #[ink(message, payable)]
         fn mint_next(&mut self) -> Result<(), PSP34Error>;
         #[ink(message, payable)]
@@ -80,17 +79,17 @@ pub mod shiden34 {
                 _instance._set_attribute(
                     Id::U8(0),
                     String::from("name").into_bytes(),
-                    String::from(name).into_bytes(),
+                    name.into_bytes(),
                 );
                 _instance._set_attribute(
                     Id::U8(0),
                     String::from("symbol").into_bytes(),
-                    String::from(symbol).into_bytes(),
+                    symbol.into_bytes(),
                 );
                 _instance._set_attribute(
                     Id::U8(0),
                     String::from("baseUri").into_bytes(),
-                    String::from(base_uri).into_bytes(),
+                    base_uri.into_bytes(),
                 );
                 _instance.max_supply = max_supply;
                 _instance.price_per_mint = price_per_mint;
@@ -100,12 +99,15 @@ pub mod shiden34 {
             })
         }
 
-        /// Check id the transfered mint values is as expected
-        fn check_value(&self, mint_amount: u64) -> Result<(), PSP34Error> {
-            if Self::env().transferred_value() != mint_amount as u128 * self.price_per_mint {
-                return Err(PSP34Error::Custom("BadMintValue".to_string()))
+        /// Check if the transferred mint values is as expected
+        fn check_value(&self, transfered_value: u128, mint_amount: u64) -> Result<(), PSP34Error> {
+            if let Some(value) = (mint_amount as u128).checked_mul(self.price_per_mint) {
+                if transfered_value == value {
+                    return Ok(())
+                }
             }
-            Ok(())
+
+            return Err(PSP34Error::Custom("BadMintValue".to_string()))
         }
 
         /// Check amount of tokens to be minted
@@ -113,11 +115,12 @@ pub mod shiden34 {
             if mint_amount == 0 {
                 return Err(PSP34Error::Custom("CannotMintZeroTokens".to_string()))
             }
-
-            if self.last_token_id + mint_amount > self.max_supply {
-                return Err(PSP34Error::Custom("CollectionFullOrLocked".to_string()))
+            if let Some(amount) = self.last_token_id.checked_add(mint_amount) {
+                if amount <= self.max_supply {
+                    return Ok(())
+                }
             }
-            Ok(())
+            return Err(PSP34Error::Custom("CollectionFullOrLocked".to_string()))
         }
 
         /// Check if token is minted
@@ -127,31 +130,25 @@ pub mod shiden34 {
         }
     }
 
-    impl PSP34Mintable for Shiden34Contract {
-        /// This mint function is not used since it can't be made payable
-        #[ink(message)]
-        fn mint(&mut self, _: AccountId, _: Id) -> Result<(), PSP34Error> {
-            Ok(())
-        }
-    }
-
-    impl Shiden34Trait for Shiden34Contract {
+    impl PSP34Tradable for Shiden34Contract {
         /// Mint next available token for the caller
         #[ink(message, payable)]
         fn mint_next(&mut self) -> Result<(), PSP34Error> {
-            self.check_value(1)?;
+            self.check_value(self.env().transferred_value(), 1)?;
             let caller = self.env().caller();
-            self.last_token_id += 1;
-            self._mint_to(caller, Id::U64(self.last_token_id))?;
-
-            Ok(())
+            if let Some(token_id) = self.last_token_id.checked_add(1) {
+                self.last_token_id += 1;
+                self._mint_to(caller, Id::U64(token_id))?;
+                return Ok(())
+            }
+            return Err(PSP34Error::Custom("CollectionFullOrLocked".to_string()))
         }
 
         /// Mint several tokens
         #[ink(message, payable)]
         #[modifiers(non_reentrant)]
         fn mint_for(&mut self, to: AccountId, mint_amount: u64) -> Result<(), PSP34Error> {
-            self.check_value(mint_amount)?;
+            self.check_value(self.env().transferred_value(), mint_amount)?;
             self.check_amount(mint_amount)?;
 
             let next_to_mint = self.last_token_id + 1; // first mint id is 1
@@ -192,20 +189,20 @@ pub mod shiden34 {
         fn max_supply(&self) -> u64 {
             self.max_supply
         }
-        
+
         /// Get max supply of tokens
         #[ink(message)]
         #[modifiers(only_owner)]
         fn withdraw(&mut self) -> Result<(), PSP34Error> {
             let balance = self.env().balance();
-            let current_balance = balance.checked_sub(self.env().minimum_balance()).unwrap_or_default();
-            let transfer_result = self.env().transfer(self.owner(), current_balance);
-            if transfer_result.is_err() {
-                return Err(PSP34Error::Custom("WithdrawFailed".to_string()));
-            }
+            let current_balance = balance
+                .checked_sub(self.env().minimum_balance())
+                .unwrap_or_default();
+            self.env()
+                .transfer(self.owner(), current_balance)
+                .map_err(|_| PSP34Error::Custom("WithdrawFailed".to_string()))?;
             Ok(())
         }
-
     }
 
     #[cfg(test)]
@@ -367,6 +364,50 @@ pub mod shiden34 {
             assert_eq!(
                 sh34.set_base_uri("shallFail".to_string()),
                 Err(Custom("O::CallerIsNotOwner".to_string()))
+            );
+        }
+
+        #[ink::test]
+        fn check_supply_overflow_ok() {
+            let max_supply = u64::MAX - 1;
+            let mut sh34 = Shiden34Contract::new(
+                String::from("Shiden34"),
+                String::from("SH34"),
+                String::from(BASE_URI),
+                max_supply,
+                PRICE,
+            );
+            sh34.last_token_id = max_supply - 1;
+
+            // check case when last_token_id.add(mint_amount) if more than u64::MAX
+            assert_eq!(
+                sh34.check_amount(3),
+                Err(Custom("CollectionFullOrLocked".to_string()))
+            );
+
+            // check case when mint_amount is 0
+            assert_eq!(
+                sh34.check_amount(0),
+                Err(Custom("CannotMintZeroTokens".to_string()))
+            );
+        }
+
+        #[ink::test]
+        fn check_value_overflow_ok() {
+            let max_supply = u64::MAX;
+            let price = u128::MAX as u128;
+            let sh34 = Shiden34Contract::new(
+                String::from("Shiden34"),
+                String::from("SH34"),
+                String::from(BASE_URI),
+                max_supply,
+                price,
+            );
+            let transferred_value = u128::MAX;
+            let mint_amount = u64::MAX;
+            assert_eq!(
+                sh34.check_value(transferred_value, mint_amount),
+                Err(Custom("BadMintValue".to_string()))
             );
         }
 

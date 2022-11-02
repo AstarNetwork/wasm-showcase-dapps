@@ -51,7 +51,7 @@ pub mod shiden34 {
     impl Ownable for Shiden34Contract {}
 
     #[openbrush::trait_definition]
-    pub trait PSP34Tradable {
+    pub trait PSP34Custom {
         #[ink(message, payable)]
         fn mint_next(&mut self) -> Result<(), PSP34Error>;
         #[ink(message, payable)]
@@ -130,7 +130,7 @@ pub mod shiden34 {
         }
     }
 
-    impl PSP34Tradable for Shiden34Contract {
+    impl PSP34Custom for Shiden34Contract {
         /// Mint next available token for the caller
         #[ink(message, payable)]
         fn mint_next(&mut self) -> Result<(), PSP34Error> {

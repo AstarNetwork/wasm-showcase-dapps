@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 const SampleContractsList = (): JSX.Element => {
   
   const navigation = {
@@ -7,9 +9,25 @@ const SampleContractsList = (): JSX.Element => {
     shibuya: [
       { name: 'PSP34Sample', address: 'aiEWySrv4ufr8NZUvFSWd2Gt7Nn3S6LS1JYieuP1t1ckLz2' },
     ],
-    local: [
-      { name: 'PSP34Sample', address: 'Input your contract address' },
-    ],
+  };
+
+  const [localContract, setLocalContract] = useState('');
+  const [customContract, setCustomContract] = useState('');
+
+  useEffect(() => {
+    const localContract: any = localStorage.getItem('localContract');
+    setLocalContract(localContract);
+    const customContract: any = localStorage.getItem('customContract');
+    setCustomContract(customContract);
+  },[]);
+
+  const saveLocalContract = (contract: string) => {
+    setLocalContract(contract);
+    localStorage.setItem('localContract', contract);
+  };
+  const saveCustomContract = (contract: string) => {
+    setCustomContract(contract);
+    localStorage.setItem('customContract', contract);
   };
 
   return (
@@ -29,9 +47,25 @@ const SampleContractsList = (): JSX.Element => {
       </dl>
       <dl role="list" className="mt-3 m-1 break-all">
         <dt className="m-1 text-xl">Local</dt>
-        {navigation.local.map((item) => (
-          <dd className="ml-4" key={item.name}>{item.name}: {item.address}</dd>
-        ))}
+        <dd className="ml-4">
+        <input
+            className="w-[480px] p-2 m-2 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
+            onChange={(event) => saveLocalContract(event.target.value)}
+            placeholder="Local contract address here"
+            value={localContract}
+        />
+        </dd>
+      </dl>
+      <dl role="list" className="mt-3 m-1 break-all">
+        <dt className="m-1 text-xl">Custom</dt>
+        <dd className="ml-4">
+        <input
+            className="w-[480px] p-2 m-2 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
+            onChange={(event) => saveCustomContract(event.target.value)}
+            placeholder="Custom contract address here"
+            value={customContract}
+        />
+        </dd>
       </dl>
     </div>
   );

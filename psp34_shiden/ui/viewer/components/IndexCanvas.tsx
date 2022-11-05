@@ -26,17 +26,22 @@ const IndexCanvas = () => {
       name: 'Local',
       url: 'ws://127.0.0.1:9944',
     },
+    {
+      name: 'Custom',
+      url: '',
+      //url: 'wss://astar-collator.cielo.works:11443',
+    },
   ];
 
   const [block, setBlock] = useState(0);
-  const [lastBlockHash, setLastBlockHash] = useState('');
   const [blockchainUrl, setBlockchainUrl] = useState('');
   const [blockchainName, setBlockchainName] = useState('');
   const [actingChainName, setActingChainName] = useState('');
   const [actingChainUrl, setActingChainUrl] = useState('');
+  const [customUrl, setCustomUrl] = useState('');
 
   const [api, setApi] = useState<any>();
-
+  
   const [contractAddress, setContractAddress] = useState('');
   const [tokenId, setTokenId] = useState('');
   const [tokenURI, setTokenURI] = useState('');
@@ -53,10 +58,12 @@ const IndexCanvas = () => {
   const [subScanTitle, setSubScanTitle] = useState('');
 
   const [ipfsGateway, setIpfsGateway] = useState('');
-  const [actingIpfsGateway, setActingIpfsGateway] = useState('ipfs.io');
+  const [actingIpfsGateway, setActingIpfsGateway] = useState('Cloudflare');
 
   useEffect(() => {
     setIpfsGateway(actingIpfsGateway);
+    const url:any = localStorage.getItem('customUrl');
+    setCustomUrl(url);
   },[]);
 
   async function getTokenURI() {
@@ -166,31 +173,44 @@ const IndexCanvas = () => {
   };
 
   const setup = async () => {
+ 
+    const newDataset = blockchains.filter(data => data.name === blockchainName);
 
-    const newDataset = blockchains
-      .filter(data => data.name === blockchainName);
-    const chainUrl = newDataset[0]?.url;
-    setBlockchainUrl(newDataset[0]?.url);
+    let chainUrl = '';
+    if (blockchainName === 'Custom') {
+      chainUrl = customUrl;
+    } else {
+      chainUrl = newDataset[0]?.url;
+    }
+    setBlockchainUrl(chainUrl);
 
     if (!chainUrl) {
       return;
     }
 
+    setActingChainName('');
+    setBlock(0);
+    setActingChainUrl('');
+
     const wsProvider = new WsProvider(chainUrl);
     const api = await ApiPromise.create({provider: wsProvider});
-    await api.rpc.chain.subscribeNewHeads((lastHeader) => {
+    const unsubscribe = await api.rpc.chain.subscribeNewHeads((lastHeader) => {
       setApi(api);
       setActingChainName(blockchainName);
       setBlock(lastHeader.number.toNumber());
-      setLastBlockHash(lastHeader.hash.toString());
       setActingChainUrl(chainUrl);
-      //console.log(api.hasSubscriptions);
+      unsubscribe();
     });
   };
 
   const saveIpfsGateway = () => {
     localStorage.setItem("ipfsGateway", ipfsGateway);
     setActingIpfsGateway(ipfsGateway);
+  };
+
+  const saveCustomURL = (url: string) => {
+    setCustomUrl(url);
+    localStorage.setItem('customUrl', url);
   };
 
   const getIpfsGatewayUri = (uri: string) => {
@@ -209,7 +229,7 @@ const IndexCanvas = () => {
         uri = 'https://ipfs.io/ipfs/' + cid + '/' + fileName;
       } else if (actingIpfsGateway === 'Crust Network') {
         uri = 'https://gw.crustapps.net/ipfs/' + cid + '/' + fileName;
-      } else if (actingIpfsGateway === 'cloudflare') {
+      } else if (actingIpfsGateway === 'Cloudflare') {
         uri = 'https://cloudflare-ipfs.com/ipfs/' + cid + '/' + fileName;
       //} else if (actingIpfsGateway === 'dweb.link') {
         //cid = cid.toV1().toString('base32');
@@ -229,11 +249,9 @@ const IndexCanvas = () => {
         <button
           className="bg-[#184e9b] hover:bg-[#2974df] hover:duration-500 text-white rounded px-4 py-2"
           onClick={setup}
-        >
-          Set Blockchain
-        </button>
+        >Set Blockchain</button>
         <select
-          className="p-3 m-3 mt-0 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 dark:border-gray-300 rounded"
+          className="p-3 m-3 mt-0 mb-2 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 dark:border-gray-300 rounded"
           onChange={(event) => {
             setBlockchainName((event.target.value));
           }}
@@ -242,12 +260,18 @@ const IndexCanvas = () => {
             <option value="Shiden">Shiden</option>
             <option value="Shibuya">Shibuya</option>
             <option value="Local">Local</option>
+            <option value="Custom">Custom</option>
         </select>
-
-        <div className="p-2 m-2 mt-0">Current Blockchain Name: {actingChainName? actingChainName : "---"}</div>
-        <div className="p-2 m-2 mt-0">Current Blockchain URL: {actingChainUrl? actingChainUrl : "---"}</div>
-        <div className="p-1 m-1">Block: {block? block : "---"}</div>
-        <div className="p-1 m-auto w-11/12 break-all">Last block hash: {lastBlockHash? lastBlockHash : "---"}</div>
+        {blockchainName === 'Custom' ?
+        <input
+            className="p-2 m-2 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
+            onChange={(event) => saveCustomURL(event.target.value)}
+            placeholder="Custom URL"
+            value={customUrl}
+          />
+        : <></> }
+        <div className="m-2">Current BlockchainName: {actingChainName? actingChainName : "---"}</div>
+        <div className="m-2">URL: {actingChainUrl? actingChainUrl : "---"}</div>
       </div>
 
       <div className="text-left p-2 pt-0 mt-5 m-auto max-w-6xl w-11/12 border-[#d8d2c5] dark:border-[#323943] bg-[#f4efe2] dark:bg-[#121923] border border-1 rounded">
@@ -308,8 +332,8 @@ const IndexCanvas = () => {
             setIpfsGateway((event.target.value));
           }}
         >
+            <option value="Cloudflare">Cloudflare</option>
             <option value="ipfs.io">ipfs.io</option>
-            <option value="cloudflare">Cloudflare</option>
             <option value="Crust Network">Crust Network</option>
         </select>
         <div className="p-2 m-2 mt-0">Current ipfs Gateway: {actingIpfsGateway? actingIpfsGateway : "---"}</div>

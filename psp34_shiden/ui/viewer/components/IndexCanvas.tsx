@@ -58,7 +58,7 @@ const IndexCanvas = () => {
   const [subScanTitle, setSubScanTitle] = useState('');
 
   const [ipfsGateway, setIpfsGateway] = useState('');
-  const [actingIpfsGateway, setActingIpfsGateway] = useState('Cloudflare');
+  const [actingIpfsGateway, setActingIpfsGateway] = useState('Pinata');
 
   useEffect(() => {
     setIpfsGateway(actingIpfsGateway);
@@ -231,10 +231,12 @@ const IndexCanvas = () => {
         uri = 'https://gw.crustapps.net/ipfs/' + cid + '/' + fileName;
       } else if (actingIpfsGateway === 'Cloudflare') {
         uri = 'https://cloudflare-ipfs.com/ipfs/' + cid + '/' + fileName;
-      //} else if (actingIpfsGateway === 'dweb.link') {
-        //cid = cid.toV1().toString('base32');
+      } else if (actingIpfsGateway === 'dweb.link') {
+        uri = 'https://dweb.link/ipfs/' + cid + '/' + fileName;
         //cid = cid.toV1().toString('base32');
         //uri = 'https://' + cid + '.ipfs.dweb.link' + '/' + fileName;
+      } else if (actingIpfsGateway === 'Pinata') {
+        uri = 'https://cielo.mypinata.cloud/ipfs/' + cid + '/' + fileName;
       }
     }
     console.log('ipfs_uri: ', uri);
@@ -247,11 +249,11 @@ const IndexCanvas = () => {
       <div className="p-3 mt-2 m-auto max-w-6xl w-11/12 border-[#d8d2c5] dark:border-[#323943] bg-[#f4efe2] dark:bg-[#121923] border border-1 rounded">
         <div className="mb-5 text-xl">Select blockchain</div>
         <button
-          className="bg-[#184e9b] hover:bg-[#2974df] hover:duration-500 text-white rounded px-4 py-2"
+          className="mb-2 bg-[#184e9b] hover:bg-[#2974df] hover:duration-500 text-white rounded px-4 py-2"
           onClick={setup}
         >Set Blockchain</button>
         <select
-          className="p-3 m-3 mt-0 mb-2 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 dark:border-gray-300 rounded"
+          className="p-3 m-3 mt-0 mb-2 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
           onChange={(event) => {
             setBlockchainName((event.target.value));
           }}
@@ -283,12 +285,12 @@ const IndexCanvas = () => {
           >{contractAddress || tokenId ? 'View NFT' : 'Enter Blank Form'}</button>
           <input
             className="p-2 m-2 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
-            onChange={(event) => setContractAddress(event.target.value)}
+            onChange={(event) => setContractAddress(event.target.value.trim())}
             placeholder="ContractAddress"
           />
           <input
             className="p-2 m-2 w-20 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
-            onChange={(event) => setTokenId(event.target.value)}
+            onChange={(event) => setTokenId(event.target.value.trim())}
             placeholder="TokenID"
           />
         </div>
@@ -298,8 +300,8 @@ const IndexCanvas = () => {
             <div className='h-64 flex justify-center items-center'>
               {tokenURI ? ipfsImageURI ?
                 <img className="p-2 m-auto h-64 duration-300" src={ipfsImageURI} /> :
-                <img className="h-32 duration-300" src="/loading_default.svg" /> :
-                <img className="h-32 duration-300" src="/image-placeholder.png" />
+                <img className="h-32 duration-300" src="./loading_default.svg" /> :
+                <img className="h-32 duration-300" src="./image-placeholder.png" />
               }
             </div>
             <p className="p-1 m-1 text-xl break-words">{tokenName}</p>
@@ -321,20 +323,22 @@ const IndexCanvas = () => {
       <div className="p-3 mt-5 m-auto max-w-6xl w-11/12 border-[#d8d2c5] dark:border-[#323943] bg-[#f4efe2] dark:bg-[#121923] border border-1 rounded">
         <div className="mb-5 text-xl">Select ipfs Gateway</div>
         <button
-          className="bg-[#184e9b] hover:bg-[#2974df] hover:duration-500 text-white rounded px-4 py-2"
+          className="mb-2 bg-[#184e9b] hover:bg-[#2974df] hover:duration-500 text-white rounded px-4 py-2"
           onClick={saveIpfsGateway}
         >
           Set ipfs Gateway
         </button>
         <select
-          className="p-3 m-3 mt-0 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 dark:border-gray-300 rounded"
+          className="p-3 m-3 mt-0 bg-[#dcd6c8] dark:bg-[#020913] border-2 border-[#95928b] dark:border-gray-500 rounded"
           onChange={(event) => {
             setIpfsGateway((event.target.value));
           }}
         >
-            <option value="Cloudflare">Cloudflare</option>
-            <option value="ipfs.io">ipfs.io</option>
-            <option value="Crust Network">Crust Network</option>
+          <option value="Pinata">Pinata</option>
+          <option value="Cloudflare">Cloudflare</option>
+          <option value="Crust Network">Crust Network</option>
+          <option value="ipfs.io">ipfs.io</option>
+          <option value="dweb.link">dweb.link</option>
         </select>
         <div className="p-2 m-2 mt-0">Current ipfs Gateway: {actingIpfsGateway? actingIpfsGateway : "---"}</div>
       </div>

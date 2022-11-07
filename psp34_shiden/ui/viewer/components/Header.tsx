@@ -7,7 +7,7 @@ const Header = (): JSX.Element => {
   const { theme, setTheme } = useTheme();
 
   const [mounted, setMounted] = useState(false);
-useEffect(() => setMounted(true), []);
+  useEffect(() => setMounted(true), []);
 
   return (
     <header className="mx-auto max-w-6xl w-11/12">
@@ -24,15 +24,14 @@ useEffect(() => setMounted(true), []);
           <button
             aria-label="DarkModeToggle"
             type="button"
-            //className="p-3 h-12 w-12 order-2 md:order-3 absolute left-2/4 transform -translate-x-2/4 md:relative md:left-0"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
             {mounted && (
               <>
                 {theme === 'dark' ? (
-                  <div className='h-8 pt-3'><img className="h-8" src="/icon_sun.svg" alt="loading" /></div>
+                  <div className='h-8 pt-3'><img className="h-8" src="./icon_sun.svg" alt="DarkMode" /></div>
                 ) : (
-                  <div className='h-8 pt-3'><img className="h-7" src="/icon_moon.svg" alt="loading" /></div>
+                  <div className='h-8 pt-3'><img className="h-7" src="./icon_moon.svg" alt="LightMode" /></div>
                 )}
               </>
             )}

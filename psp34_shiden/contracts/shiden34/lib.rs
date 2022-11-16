@@ -124,7 +124,10 @@ pub mod shiden_graffiti {
     mod tests {
         use super::*;
         use crate::shiden_graffiti::PSP34Error::*;
-        use ink_env::test;
+        use ink_env::{
+            pay_with_call,
+            test,
+        };
         use ink_lang as ink;
         use ink_prelude::string::String as PreludeString;
         use psp34_helper::impls::psp34_custom::{
@@ -260,15 +263,24 @@ pub mod shiden_graffiti {
 
         #[ink::test]
         fn withdrawal_works() {
-            // TODO rework after update to ink 3.4.0 use pay_with_call
             let mut shg = init();
             let accounts = default_accounts();
-            assert_eq!(shg.owner(), accounts.alice);
+            set_balance(accounts.bob, PRICE);
             set_sender(accounts.bob);
 
-            test::set_value_transferred::<ink_env::DefaultEnvironment>(PRICE);
-            assert!(shg.mint_next().is_ok());
-            // assert!(shg.env().balance() == PRICE);
+            assert!(pay_with_call!(shg.mint_next(), PRICE).is_ok());
+            let expected_contract_balance = PRICE + shg.env().minimum_balance();
+            assert_eq!(shg.env().balance(), expected_contract_balance);
+
+            // Bob fails to withdraw
+            set_sender(accounts.bob);
+            assert!(shg.withdraw().is_err());
+            assert_eq!(shg.env().balance(), expected_contract_balance);
+
+            // Alice (contract owner) withdraws. Existential minimum is still set
+            set_sender(accounts.alice);
+            assert!(shg.withdraw().is_ok());
+            // assert_eq!(shg.env().balance(), shg.env().minimum_balance());
         }
 
         #[ink::test]
@@ -381,6 +393,10 @@ pub mod shiden_graffiti {
 
         fn set_sender(sender: AccountId) {
             ink_env::test::set_caller::<Environment>(sender);
+        }
+
+        fn set_balance(account_id: AccountId, balance: Balance) {
+            ink_env::test::set_account_balance::<ink_env::DefaultEnvironment>(account_id, balance)
         }
     }
 }

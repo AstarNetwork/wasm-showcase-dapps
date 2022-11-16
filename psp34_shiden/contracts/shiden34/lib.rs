@@ -7,10 +7,6 @@ pub mod shiden_graffiti {
         EmitEvent,
         Env,
     };
-    use ink_prelude::string::{
-        String as PreludeString,
-        ToString,
-    };
     use ink_storage::traits::SpreadAllocate;
     use openbrush::{
         contracts::{
@@ -21,7 +17,6 @@ pub mod shiden_graffiti {
             },
             reentrancy_guard::*,
         },
-        modifiers,
         traits::{
             Storage,
             String,
@@ -86,7 +81,7 @@ pub mod shiden_graffiti {
             max_supply: u64,
             price_per_mint: Balance,
         ) -> Self {
-            ink_lang::codegen::initialize_contract(|instance: &mut Shiden34Contract| {
+            ink_lang::codegen::initialize_contract(|instance: &mut ShidenGraffitiContract| {
                 let collection_id = instance.collection_id();
                 instance._set_attribute(collection_id.clone(), String::from("name"), name);
                 instance._set_attribute(collection_id.clone(), String::from("symbol"), symbol);
@@ -131,11 +126,11 @@ pub mod shiden_graffiti {
         use crate::shiden_graffiti::PSP34Error::*;
         use ink_env::test;
         use ink_lang as ink;
+        use ink_prelude::string::String as PreludeString;
         use psp34_helper::impls::psp34_custom::{
             psp34_custom::Internal,
             psp34_custom_types::ShidenGraffitiError,
         };
-
         const PRICE: Balance = 100_000_000_000_000_000;
         const BASE_URI: &str = "ipfs://myIpfsUri/";
         const MAX_SUPPLY: u64 = 10;
@@ -145,15 +140,15 @@ pub mod shiden_graffiti {
             let shg = init();
             let collection_id = shg.collection_id();
             assert_eq!(
-                sh34.get_attribute(collection_id.clone(), String::from("name")),
+                shg.get_attribute(collection_id.clone(), String::from("name")),
                 Some(String::from("ShidenGraffiti"))
             );
             assert_eq!(
-                sh34.get_attribute(collection_id.clone(), String::from("symbol")),
+                shg.get_attribute(collection_id.clone(), String::from("symbol")),
                 Some(String::from("SH34"))
             );
             assert_eq!(
-                sh34.get_attribute(collection_id, String::from("baseUri")),
+                shg.get_attribute(collection_id, String::from("baseUri")),
                 Some(String::from(BASE_URI))
             );
             assert_eq!(shg.max_supply(), MAX_SUPPLY);
@@ -285,19 +280,21 @@ pub mod shiden_graffiti {
             test::set_value_transferred::<ink_env::DefaultEnvironment>(PRICE);
             assert!(shg.mint_next().is_ok());
             // return error if request is for not yet minted token
-            assert_eq!(sh34.token_uri(42), Err(TokenNotExists));
-            assert_eq!(shg.token_uri(1),
-                Ok(String::from(BASE_URI.to_owned() + "1.json"))
+            assert_eq!(shg.token_uri(42), Err(TokenNotExists));
+            assert_eq!(
+                shg.token_uri(1),
+                Ok(PreludeString::from(BASE_URI.to_owned() + "1.json"))
             );
+
             // return error if request is for not yet minted token
             assert_eq!(shg.token_uri(42), Err(TokenNotExists));
 
             // verify token_uri when baseUri is empty
             set_sender(accounts.alice);
-            assert!(shg.set_base_uri("".to_string()).is_ok());
+            assert!(shg.set_base_uri(PreludeString::from("")).is_ok());
             assert_eq!(
                 shg.token_uri(1),
-                Ok("".to_owned() + &String::from("1.json"))
+                Ok("".to_owned() + &PreludeString::from("1.json"))
             );
         }
 
@@ -323,8 +320,8 @@ pub mod shiden_graffiti {
             );
             set_sender(accounts.bob);
             assert_eq!(
-                shg.set_base_uri("shallFail".to_string()),
-                Err(PSP34Error::Custom("O::CallerIsNotOwner".to_string()))
+                shg.set_base_uri(NEW_BASE_URI.into()),
+                Err(PSP34Error::Custom(String::from("O::CallerIsNotOwner")))
             );
         }
 

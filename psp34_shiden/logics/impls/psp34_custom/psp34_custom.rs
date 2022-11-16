@@ -20,7 +20,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use ink_prelude::string::{
-    String,
+    String as PreludeString,
     ToString,
 };
 
@@ -43,6 +43,7 @@ use openbrush::{
         AccountId,
         Balance,
         Storage,
+        String,
     },
 };
 
@@ -80,9 +81,9 @@ where
             self.data::<Data>()
                 .last_token_id
                 .checked_add(1)
-                .ok_or(PSP34Error::Custom(
+                .ok_or(PSP34Error::Custom(String::from(
                     ShidenGraffitiError::CollectionIsFull.as_str(),
-                ))?;
+                )))?;
         self.data::<psp34::Data<enumerable::Balances>>()
             ._mint_to(caller, Id::U64(token_id))?;
         self.data::<Data>().last_token_id += 1;
@@ -112,28 +113,25 @@ where
 
     /// Set new value for the baseUri
     #[modifiers(only_owner)]
-    default fn set_base_uri(&mut self, uri: String) -> Result<(), PSP34Error> {
+    default fn set_base_uri(&mut self, uri: PreludeString) -> Result<(), PSP34Error> {
         let id = self
             .data::<psp34::Data<enumerable::Balances>>()
             .collection_id();
-        self.data::<metadata::Data>()._set_attribute(
-            id,
-            String::from("baseUri").into_bytes(),
-            uri.into_bytes(),
-        );
+        self.data::<metadata::Data>()
+            ._set_attribute(id, String::from("baseUri"), uri.into_bytes());
         Ok(())
     }
 
     /// Get URI from token ID
-    default fn token_uri(&self, token_id: u64) -> Result<String, PSP34Error> {
+    default fn token_uri(&self, token_id: u64) -> Result<PreludeString, PSP34Error> {
         self._token_exists(Id::U64(token_id))?;
         let value = self.get_attribute(
             self.data::<psp34::Data<enumerable::Balances>>()
                 .collection_id(),
-            String::from("baseUri").into_bytes(),
+            String::from("baseUri"),
         );
-        let mut token_uri = String::from_utf8(value.unwrap()).unwrap();
-        token_uri = token_uri + &token_id.to_string() + &String::from(".json");
+        let mut token_uri = PreludeString::from_utf8(value.unwrap()).unwrap();
+        token_uri = token_uri + &token_id.to_string() + &PreludeString::from(".json");
         Ok(token_uri)
     }
 
@@ -156,7 +154,9 @@ where
             .unwrap_or_default();
         Self::env()
             .transfer(self.data::<ownable::Data>().owner(), current_balance)
-            .map_err(|_| PSP34Error::Custom(ShidenGraffitiError::WithdrawalFailed.as_str()))?;
+            .map_err(|_| {
+                PSP34Error::Custom(String::from(ShidenGraffitiError::WithdrawalFailed.as_str()))
+            })?;
         Ok(())
     }
 }
@@ -177,24 +177,26 @@ where
                 return Ok(())
             }
         }
-        return Err(PSP34Error::Custom(
+        return Err(PSP34Error::Custom(String::from(
             ShidenGraffitiError::BadMintValue.as_str(),
-        ))
+        )))
     }
 
     /// Check amount of tokens to be minted
     default fn _check_amount(&self, mint_amount: u64) -> Result<(), PSP34Error> {
         if mint_amount == 0 {
-            return Err(PSP34Error::Custom("CannotMintZeroTokens".to_string()))
+            return Err(PSP34Error::Custom(String::from(
+                ShidenGraffitiError::CannotMintZeroTokens.as_str(),
+            )))
         }
         if let Some(amount) = self.data::<Data>().last_token_id.checked_add(mint_amount) {
             if amount <= self.data::<Data>().max_supply {
                 return Ok(())
             }
         }
-        return Err(PSP34Error::Custom(
+        return Err(PSP34Error::Custom(String::from(
             ShidenGraffitiError::CollectionIsFull.as_str(),
-        ))
+        )))
     }
 
     /// Check if token is minted

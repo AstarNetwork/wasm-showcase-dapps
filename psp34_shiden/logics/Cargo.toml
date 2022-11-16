@@ -16,7 +16,6 @@ scale = { package = "parity-scale-codec", version = "3", default-features = fals
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
 
 openbrush = { tag = "v2.3.0", git = "https://github.com/Supercolony-net/openbrush-contracts", default-features = false, features = ["ownable", "psp34", "reentrancy_guard"] }
-primitive-types = { version = "0.11.1", default-features = false, features = ["num-traits"] }
 
 [lib]
 path = "lib.rs"
@@ -35,5 +34,4 @@ std = [
     "scale-info",
     "scale-info/std",
     "openbrush/std",
-    "primitive-types/std",
 ]

@@ -1,8 +1,7 @@
-use ink_prelude::string::{
+use openbrush::traits::{
+    Balance,
     String,
-    ToString,
 };
-use openbrush::traits::Balance;
 pub const STORAGE_KEY: u32 = openbrush::storage_unique_key!(Data);
 
 #[derive(Default, Debug)]
@@ -26,10 +25,10 @@ pub enum ShidenGraffitiError {
 impl ShidenGraffitiError {
     pub fn as_str(&self) -> String {
         match self {
-            ShidenGraffitiError::CannotMintZeroTokens => "CannotMintZeroTokens".to_string(),
-            ShidenGraffitiError::CollectionIsFull => "CollectionIsFull".to_string(),
-            ShidenGraffitiError::BadMintValue => "BadMintValue".to_string(),
-            ShidenGraffitiError::WithdrawalFailed => "WithdrawalFailed".to_string(),
+            ShidenGraffitiError::CannotMintZeroTokens => String::from("CannotMintZeroTokens"),
+            ShidenGraffitiError::CollectionIsFull => String::from("CollectionIsFull"),
+            ShidenGraffitiError::BadMintValue => String::from("BadMintValue"),
+            ShidenGraffitiError::WithdrawalFailed => String::from("WithdrawalFailed"),
         }
     }
 }

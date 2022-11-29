@@ -12,9 +12,12 @@ pub use crate::traits::{
 use crate::{
     ensure,
     helpers::math::casted_mul,
-    traits::master_chef::{
-        data::UserInfo,
-        errors::FarmingError,
+    traits::{
+        block::BlockInfo,
+        master_chef::{
+            data::UserInfo,
+            errors::FarmingError,
+        },
     },
 };
 use ink_env::CallFlags;
@@ -40,7 +43,9 @@ pub const MAX_PERIOD: u32 = 23u32;
 pub const FIRST_PERIOD_REWERD_SUPPLY: Balance = 151629858171523000000u128;
 
 #[openbrush::trait_definition]
-pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + FarmingEvents {
+pub trait Farming:
+    Storage<Data> + Storage<ownable::Data> + FarmingGetters + FarmingEvents + BlockInfo
+{
     #[ink(message)]
     #[modifiers(only_owner)]
     fn add(
@@ -64,11 +69,12 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
                 .rewarders
                 .insert(&pool_length, &rewarder_address);
         }
+        let block_number = self.block_number();
         self.data::<Data>().pool_info.insert(
             &pool_length,
             &Pool {
                 acc_arsw_per_share: 0,
-                last_reward_block: Self::env().block_number(),
+                last_reward_block: block_number,
                 alloc_point,
             },
         );
@@ -135,7 +141,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         let mut acc_arsw_per_share = pool.acc_arsw_per_share;
 
         let lp_supply = self._get_lp_supply(pool_id)?;
-        let current_block = Self::env().block_number();
+        let current_block = self.block_number();
 
         if current_block > pool.last_reward_block && lp_supply != 0 {
             let additional_acc_arsw_per_share =
@@ -422,7 +428,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         .call_flags(CallFlags::default().set_allow_reentry(true))
         .fire()
         .unwrap()?;
-        self._emit_deposit_arsw_event(Self::env().block_number(), amount);
+        self._emit_deposit_arsw_event(self.block_number(), amount);
         Ok(())
     }
 
@@ -447,7 +453,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         let mut pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        let current_block = Self::env().block_number();
+        let current_block = self.block_number();
         if current_block > pool.last_reward_block {
             let lp_supply = self._get_lp_supply(pool_id)?;
             if lp_supply > 0 {

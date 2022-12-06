@@ -19,7 +19,7 @@ index 48cca0b..75c17b1 100644
  declare function _genValidGasLimitAndValue(gasLimitAndValue?: GasLimitAndValue): GasLimitAndValue;
  export declare function handleReturnType(result: any, typeDescription: any): any;
 diff --git a/node_modules/@supercolony/typechain-types/dist/src/query.js b/node_modules/@supercolony/typechain-types/dist/src/query.js
-index 1f5e337..2411adb 100644
+index 1f5e337..e60373f 100644
 --- a/node_modules/@supercolony/typechain-types/dist/src/query.js
 +++ b/node_modules/@supercolony/typechain-types/dist/src/query.js
 @@ -79,12 +79,12 @@ function queryJSON(nativeContract, callerAddress, title, args, gasLimitAndValue,
@@ -103,15 +103,20 @@ index 1f5e337..2411adb 100644
                          }];
              }
          });
-@@ -229,7 +228,7 @@ function handleReturnType(result, typeDescription) {
+@@ -229,6 +228,13 @@ function handleReturnType(result, typeDescription) {
          return new types_1.ReturnNumber(result);
      if (typeof result !== 'object' || typeof typeDescription !== 'object' || typeDescription.isPrimitive)
          return result;
--    if (typeDescription.name === 'Array') {
-+    if (typeDescription.name === 'Array' || typeDescription.name.startsWith('Result<')) {
++    if (typeDescription.name.startsWith('Result<')) {
++        Object.entries(result).forEach(function (_a) {
++            var key = _a[0], value = _a[1];
++            var index = key === 'ok' ? 0 : 1;
++            result[key] = handleReturnType(value, typeDescription.body[index]);
++        });
++    }
+     if (typeDescription.name === 'Array') {
          Object.entries(result).forEach(function (_a) {
              var key = _a[0], value = _a[1];
-             result[key] = handleReturnType(value, typeDescription.body[0]);
 diff --git a/node_modules/@supercolony/typechain-types/dist/src/tx.d.ts b/node_modules/@supercolony/typechain-types/dist/src/tx.d.ts
 index 917eefa..cfcb908 100644
 --- a/node_modules/@supercolony/typechain-types/dist/src/tx.d.ts

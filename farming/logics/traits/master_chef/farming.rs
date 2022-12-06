@@ -223,10 +223,10 @@ pub trait Farming:
         to: AccountId,
     ) -> Result<(), FarmingError> {
         ensure!(amount > 0, FarmingError::ZeroWithdrawal);
+        self.update_pool(pool_id)?;
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self.update_pool(pool_id)?;
         let caller = Self::env().caller();
         let user = self
             .get_user_info(pool_id, caller)

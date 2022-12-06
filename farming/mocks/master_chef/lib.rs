@@ -6,6 +6,7 @@ pub mod master_chef_mock {
     use farming::traits::{
         block::BlockInfo,
         master_chef::{
+            errors::FarmingError,
             events::*,
             farming::*,
             getters::*,
@@ -248,6 +249,23 @@ pub mod master_chef_mock {
         #[ink(message)]
         pub fn get_block_number(&self) -> BlockNumber {
             self.block_number()
+        }
+
+        #[ink(message)]
+        pub fn calculate_additional_acc_arsw_per_share_test(
+            &self,
+            acc_arsw_per_share: Balance,
+            last_reward_block: BlockNumber,
+            alloc_point: u32,
+            current_block: BlockNumber,
+            lp_supply: Balance,
+        ) -> Result<Balance, FarmingError> {
+            let pool = Pool {
+                acc_arsw_per_share,
+                last_reward_block,
+                alloc_point,
+            };
+            self._calculate_additional_acc_arsw_per_share(&pool, current_block, lp_supply)
         }
     }
 }

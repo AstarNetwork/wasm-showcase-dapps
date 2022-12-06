@@ -20,7 +20,6 @@ describe('Farming', () => {
   let originBlock: number;
   const BLOCK_PER_PERIOD = 215_000;
   const FIRST_PERIOD_REWERD_SUPPLY = 151629858171523000000n;
-  const ACC_ARSW_PRECISION = 1_000_000_000_000n;
   const MAX_PERIOD = 23;
 
   async function setup(): Promise<void> {
@@ -168,7 +167,7 @@ describe('Farming', () => {
         poolId: 0,
         lastRewardBlock,
         lpSupply: (await lp.query.balanceOf(farming.address)).value.toNumber(),
-        accArswPerShare,
+        accArswPerShare: accArswPerShare.toNumber(),
       });
     });
 
@@ -239,7 +238,7 @@ describe('Farming', () => {
     });
 
     it('Should call updateAllPools', async () => {
-      const { gasRequired } = await farming.query.set(0, 1, lp.address, true);
+      const { gasRequired } = await farming.query.set(0, 1, null, true);
       await advanceBlock();
       const result = await farming.tx.set(0, 1, null, true, {
         gasLimit: gasRequired * 3n,
@@ -251,7 +250,7 @@ describe('Farming', () => {
         poolId: 0,
         lastRewardBlock,
         lpSupply: (await lp.query.balanceOf(farming.address)).value.toNumber(),
-        accArswPerShare,
+        accArswPerShare: accArswPerShare.toNumber(),
       });
       emit(
         result,
@@ -262,7 +261,7 @@ describe('Farming', () => {
           lpSupply: (
             await dummy.query.balanceOf(farming.address)
           ).value.toNumber(),
-          accArswPerShare,
+          accArswPerShare: accArswPerShare.toNumber(),
         },
         1,
       );
@@ -313,6 +312,12 @@ describe('Farming', () => {
         [bob, farming],
         ['-10', '10'],
       );
+      // Update deposited user amount
+      expect(
+        (
+          await farming.query.getUserInfo(0, bob.address)
+        ).value.amount.toString(),
+      ).toBe('10');
       emit(tx, 'Deposit', {
         poolId: 0,
         amount: 10,
@@ -348,6 +353,11 @@ describe('Farming', () => {
       const { gasRequired } = await farming
         .withSigner(bob)
         .query.withdraw(0, 10, bob.address);
+      expect(
+        (
+          await farming.query.getUserInfo(0, bob.address)
+        ).value.rewardDebt.toString(),
+      ).toBe('0');
       const tx = await changeTokenBalances(
         () =>
           farming
@@ -357,12 +367,99 @@ describe('Farming', () => {
         [bob, farming],
         ['10', '-10'],
       );
+      // Update rewardDebt
+      expect(
+        (
+          await farming.query.getUserInfo(0, bob.address)
+        ).value.rewardDebt.toBigInt(),
+      ).toBeGreaterThan(0n);
       emit(tx, 'Withdraw', {
         poolId: 0,
         amount: 10,
         to: bob.address,
         user: bob.address,
       });
+    });
+  });
+
+  let prevPendingArswBob: string;
+  describe('PendingARSW', () => {
+    it('Should revert if invalid pool', async () => {
+      revertedWith(
+        await farming.withSigner(bob).query.pendingArsw(2, bob.address),
+        'poolNotFound',
+      );
+    });
+    it('PendingARSW should equal ExpectedARSW', async () => {
+      const expectedArsw = '13784532561047545454';
+      const {
+        value: { ok: pendingArsw },
+      } = await farming.query.pendingArsw(0, bob.address);
+      expect(pendingArsw.toString()).toBe(expectedArsw);
+      prevPendingArswBob = expectedArsw;
+    });
+    it('When block is lastRewardBlock', async () => {
+      let { gasRequired } = await lp.query.approve(
+        farming.address,
+        parseUnits(10_000).toString(),
+      );
+      await lp.tx.approve(farming.address, parseUnits(10_000).toString(), {
+        gasLimit: gasRequired,
+      });
+      ({ gasRequired } = await farming.query.deposit(
+        0,
+        parseUnits(1).toString(),
+        deployer.address,
+      ));
+      await farming.tx.deposit(0, parseUnits(1).toString(), deployer.address, {
+        gasLimit: gasRequired,
+      });
+
+      const { lastRewardBlock } = (await farming.query.getPoolInfo(0)).value;
+
+      const { value: currentBlock } = await farming.query.getBlockNumber();
+      expect(currentBlock).toBe(lastRewardBlock);
+
+      const {
+        value: { ok: pendingArswBob },
+      } = await farming.query.pendingArsw(0, bob.address);
+      const {
+        value: { ok: pendingArswAlice },
+      } = await farming.query.pendingArsw(0, deployer.address);
+      expect(pendingArswBob.toString()).toBe(prevPendingArswBob);
+      expect(pendingArswAlice.toString()).toBe('0');
+    });
+    it('When a period is passed from the lastRewardBlock', async () => {
+      await advanceBlock();
+      const {
+        value: { ok: pendingArswBob },
+      } = await farming.query.pendingArsw(0, bob.address);
+      expect(pendingArswBob.toString()).toBe(prevPendingArswBob);
+      const {
+        value: { ok: pendingArswAlice },
+      } = await farming.query.pendingArsw(0, deployer.address);
+      expect(pendingArswAlice.toBigInt()).toBeGreaterThan(0n);
+    });
+  });
+
+  describe('Harvest', () => {
+    it('Should revert if invalid pool', async () => {
+      revertedWith(
+        await farming.withSigner(bob).query.harvest(2, bob.address),
+        'poolNotFound',
+      );
+    });
+    it('Should give back the correct amount of ARSW and reward', async () => {
+      const { gasRequired } = await farming
+        .withSigner(bob)
+        .query.harvest(0, bob.address);
+      let { value: aploBalance } = await aplo.query.balanceOf(bob.address);
+      expect(aploBalance.toBigInt()).toBe(0n);
+      await farming
+        .withSigner(bob)
+        .tx.harvest(0, bob.address, { gasLimit: gasRequired });
+      ({ value: aploBalance } = await aplo.query.balanceOf(bob.address));
+      expect(aploBalance.toString()).toBe(prevPendingArswBob);
     });
   });
 

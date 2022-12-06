@@ -31,8 +31,6 @@ describe('Dex spec', () => {
   let routerFactory: Router_factory;
   let tokenFactory: Token_factory;
   let wnativeFactory: Wnative_factory;
-  // const alice = keyring.addFromUri('//Alice//stash');
-  // const bob = keyring.addFromUri('//Bob//stash');
 
   let pairHash: Hash;
   let factory: Factory;

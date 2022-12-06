@@ -1,6 +1,7 @@
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ReturnNumber } from '@supercolony/typechain-types';
+import Token from '../types/contracts/psp22_token';
 import { expect } from '@jest/globals';
 // Create a new instance of contract
 const wsProvider = new WsProvider('ws://127.0.0.1:9944');
@@ -59,4 +60,31 @@ export function revertedWith(
   } else {
     expect(result.value.err).toHaveProperty(errorTitle);
   }
+}
+
+export async function changeTokenBalances<T>(
+  txThunk: () => Promise<T>,
+  token: Token,
+  actors: { address: string }[],
+  expectedChanges: string[],
+): Promise<T> {
+  const accounts = actors.map((actor) => actor.address);
+  const beforeBalances = await Promise.all(
+    accounts.map(
+      async (account) => (await token.query.balanceOf(account)).value.rawNumber,
+    ),
+  );
+  console.log(beforeBalances);
+  const result = await txThunk();
+  const afterBalances = await Promise.all(
+    accounts.map(
+      async (account) => (await token.query.balanceOf(account)).value.rawNumber,
+    ),
+  );
+  console.log(afterBalances);
+  const changes = afterBalances.map((afterBalance, i) =>
+    afterBalance.sub(beforeBalances[i]).toString(),
+  );
+  expect(changes).toEqual(expectedChanges);
+  return result;
 }

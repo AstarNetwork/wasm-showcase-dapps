@@ -19,7 +19,7 @@ index 48cca0b..75c17b1 100644
  declare function _genValidGasLimitAndValue(gasLimitAndValue?: GasLimitAndValue): GasLimitAndValue;
  export declare function handleReturnType(result: any, typeDescription: any): any;
 diff --git a/node_modules/@supercolony/typechain-types/dist/src/query.js b/node_modules/@supercolony/typechain-types/dist/src/query.js
-index 1f5e337..6478202 100644
+index 1f5e337..2411adb 100644
 --- a/node_modules/@supercolony/typechain-types/dist/src/query.js
 +++ b/node_modules/@supercolony/typechain-types/dist/src/query.js
 @@ -79,12 +79,12 @@ function queryJSON(nativeContract, callerAddress, title, args, gasLimitAndValue,
@@ -86,7 +86,16 @@ index 1f5e337..6478202 100644
                      resValueStr = output ? output.toString() : null;
                      resValueJSON = output ? output.toJSON() : null;
                      if (result.isErr)
-@@ -203,6 +205,7 @@ title, args, gasLimitAndValue) {
+@@ -194,15 +196,12 @@ title, args, gasLimitAndValue) {
+                             issue: 'FAIL_AFTER_CALL::RESULT_NOT_OK',
+                             _asError: result.isErr ? result.asErr : undefined,
+                         };
+-                    if (output == null)
+-                        error = {
+-                            issue: 'OUTPUT_IS_NULL',
+-                        };
+                     if (error)
+                         throw error;
                      return [2 /*return*/, {
                              output: output,
                              gasConsumed: gasConsumed.toBigInt(),
@@ -94,7 +103,7 @@ index 1f5e337..6478202 100644
                          }];
              }
          });
-@@ -229,7 +232,7 @@ function handleReturnType(result, typeDescription) {
+@@ -229,7 +228,7 @@ function handleReturnType(result, typeDescription) {
          return new types_1.ReturnNumber(result);
      if (typeof result !== 'object' || typeof typeDescription !== 'object' || typeDescription.isPrimitive)
          return result;

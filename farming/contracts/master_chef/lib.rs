@@ -15,10 +15,6 @@ pub mod master_chef_contract {
         EmitEvent,
         Env,
     };
-    use ink_lang::codegen::{
-        EmitEvent,
-        Env,
-    };
     use ink_storage::traits::SpreadAllocate;
     use openbrush::{
         contracts::{

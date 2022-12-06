@@ -11,7 +11,10 @@ pub use crate::traits::{
 };
 use crate::{
     ensure,
-    helpers::math::casted_mul,
+    helpers::{
+        helper::transfer_from_with_reentrancy,
+        math::casted_mul,
+    },
     traits::{
         block::BlockInfo,
         master_chef::{
@@ -202,12 +205,11 @@ pub trait Farming:
         let lp_token = self
             .get_lp_token(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        PSP22Ref::transfer_from(
-            &lp_token,
+        transfer_from_with_reentrancy(
+            lp_token,
             Self::env().caller(),
             Self::env().account_id(),
             amount,
-            Vec::new(),
         )?;
         self._emit_deposit_event(Self::env().caller(), pool_id, amount, to);
         Ok(())

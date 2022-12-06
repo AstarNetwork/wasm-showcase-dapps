@@ -6,11 +6,18 @@ import Rewarder_factory from '../types/constructors/rewarder_contract';
 import Token from '../types/contracts/psp22_token';
 import Farming from '../types/contracts/master_chef_mock';
 import Rewarder from '../types/contracts/rewarder_contract';
-import { emit, parseUnits, revertedWith, setupApi } from './setup';
+import {
+  changeTokenBalances,
+  emit,
+  parseUnits,
+  revertedWith,
+  setupApi,
+} from './setup';
 import { expect } from '@jest/globals';
 describe('Farming', () => {
   let api: ApiPromise;
   let deployer: KeyringPair;
+  let bob: KeyringPair;
   let [aplo, lp, dummy]: Token[] = [];
   let farming: Farming;
   let rewarder: Rewarder;
@@ -25,7 +32,7 @@ describe('Farming', () => {
   });
 
   async function setup(): Promise<void> {
-    ({ api: api, alice: deployer } = await setupApi());
+    ({ api: api, alice: deployer, bob } = await setupApi());
     const tokenFactory = new Token_factory(api, deployer);
     const { address: aploAddress } = await tokenFactory.new(
       parseUnits(1_000_000).toString(),
@@ -47,6 +54,13 @@ describe('Farming', () => {
     );
     aplo = new Token(aploAddress, deployer, api);
     lp = new Token(lpAddress, deployer, api);
+    const { gasRequired } = await lp.query.mint(
+      bob.address,
+      parseUnits(10_000).toString(),
+    );
+    await lp.tx.mint(bob.address, parseUnits(10_000).toString(), {
+      gasLimit: gasRequired,
+    });
     dummy = new Token(dummyAddress, deployer, api);
     const farmingFactory = new Farming_factory(api, deployer);
     const { address: farmingAddress } = await farmingFactory.new(aploAddress);
@@ -226,9 +240,9 @@ describe('Farming', () => {
     });
 
     it('Should call updateAllPools', async () => {
-      const { gasRequired } = await farming.query.set(0, 1, lp.address, false);
+      const { gasRequired } = await farming.query.set(0, 1, lp.address, true);
       await advanceBlock();
-      const result = await farming.tx.set(0, 1, lp.address, false, {
+      const result = await farming.tx.set(0, 1, null, true, {
         gasLimit: gasRequired * 3n,
       });
       const { lastRewardBlock, accArswPerShare } = (
@@ -260,6 +274,59 @@ describe('Farming', () => {
     it('PoolLength should execute', async () => {
       const { value: poolLength } = await farming.query.poolLength();
       expect(poolLength).toBe(2);
+    });
+  });
+
+  describe('Deposit', () => {
+    it('Depositing 0 amount', async () => {
+      let { gasRequired } = await lp
+        .withSigner(bob)
+        .query.approve(farming.address, parseUnits(10_000).toString());
+      await lp
+        .withSigner(bob)
+        .tx.approve(farming.address, parseUnits(10_000).toString(), {
+          gasLimit: gasRequired,
+        });
+      ({ gasRequired } = await farming
+        .withSigner(bob)
+        .query.deposit(0, 0, bob.address));
+      const tx = await farming
+        .withSigner(bob)
+        .tx.deposit(0, 0, bob.address, { gasLimit: gasRequired });
+      emit(tx, 'Deposit', {
+        poolId: 0,
+        amount: 0,
+        to: bob.address,
+        user: bob.address,
+      });
+    });
+
+    it('successfully deposit 10 amount', async () => {
+      const { gasRequired } = await farming
+        .withSigner(bob)
+        .query.deposit(0, 10, bob.address);
+      const tx = await changeTokenBalances(
+        () =>
+          farming
+            .withSigner(bob)
+            .tx.deposit(0, 10, bob.address, { gasLimit: gasRequired }),
+        lp,
+        [bob, farming],
+        ['-10', '10'],
+      );
+      emit(tx, 'Deposit', {
+        poolId: 0,
+        amount: 10,
+        to: bob.address,
+        user: bob.address,
+      });
+    });
+
+    it('Depositing into non-existent pool should fail', async () => {
+      revertedWith(
+        await farming.withSigner(bob).query.deposit(2, 10, bob.address),
+        'poolNotFound',
+      );
     });
   });
 

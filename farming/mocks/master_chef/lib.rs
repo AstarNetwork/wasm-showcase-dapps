@@ -244,6 +244,7 @@ pub mod master_chef_mock {
         pub fn increase_block_number(&mut self, offset: BlockNumber) {
             self.block_number += offset
         }
+
         #[ink(message)]
         pub fn get_block_number(&self) -> BlockNumber {
             self.block_number()

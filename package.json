@@ -13,6 +13,7 @@
     "jest": "^29.3.1",
     "ts-node": "^10.8.0",
     "@supercolony/typechain-compiler": "^0.5.1-beta.1",
+    "@supercolony/typechain-polkadot": "^0.5.0",
     "@supercolony/typechain-types": "^0.0.16",
     "patch-package": "^6.4.7",
     "ts-jest": "^29.0.3"

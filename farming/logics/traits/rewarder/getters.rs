@@ -1,11 +1,11 @@
 use crate::traits::rewarder::rewarder::Data;
 use ink_env::AccountId;
-use openbrush::traits::Storage;
+use openbrush::traits::{Storage, Balance};
 
 #[openbrush::trait_definition]
 pub trait RewarderGetters: Storage<Data> {
     #[ink(message)]
-    fn reward_multiplier(&self) -> u32 {
+    fn reward_multiplier(&self) -> Balance {
         self.data::<Data>().reward_multiplier
     }
 

@@ -1,24 +1,20 @@
-import { ApiPromise } from '@polkadot/api';
-import { KeyringPair } from '@polkadot/keyring/types';
 import Token_factory from '../types/constructors/psp22_token';
 import Farming_factory from '../types/constructors/master_chef_mock';
 import Rewarder_factory from '../types/constructors/rewarder_contract';
 import Token from '../types/contracts/psp22_token';
 import Farming from '../types/contracts/master_chef_mock';
 import Rewarder from '../types/contracts/rewarder_contract';
-import {
-  changeTokenBalances,
-  emit,
-  parseUnits,
-  revertedWith,
-  setupApi,
-} from './setup';
+import { ApiPromise } from '@polkadot/api';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { changeTokenBalances, emit, parseUnits, revertedWith } from './setup';
 import { expect } from '@jest/globals';
 describe('Farming', () => {
   let api: ApiPromise;
   let deployer: KeyringPair;
   let bob: KeyringPair;
+
   let [aplo, lp, dummy]: Token[] = [];
+
   let farming: Farming;
   let rewarder: Rewarder;
   let originBlock: number;
@@ -27,12 +23,8 @@ describe('Farming', () => {
   const ACC_ARSW_PRECISION = 1_000_000_000_000n;
   const MAX_PERIOD = 23;
 
-  afterAll(() => {
-    api.disconnect();
-  });
-
   async function setup(): Promise<void> {
-    ({ api: api, alice: deployer, bob } = await setupApi());
+    ({ api, alice: deployer, bob } = globalThis.setup);
     const tokenFactory = new Token_factory(api, deployer);
     const { address: aploAddress } = await tokenFactory.new(
       parseUnits(1_000_000).toString(),

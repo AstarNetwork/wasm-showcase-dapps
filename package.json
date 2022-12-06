@@ -21,7 +21,7 @@
     "compile": "typechain-compiler",
     "compile:release": "typechain-compiler --release",
     "test:single": "jest",
-    "test:typechain": "jest --testPathPattern  \".spec.ts$\"",
+    "test:typechain": "jest --testPathPattern \".spec.ts$\" --runInBand",
     "postinstall": "patch-package"
   },
   "resolutions": {

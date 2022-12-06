@@ -11,10 +11,10 @@ import Pair from '../types/contracts/pair_contract';
 import Token from '../types/contracts/psp22_token';
 import Wnative from '../types/contracts/wnative_contract';
 import Router from '../types/contracts/router_contract';
+import { AccountId, Hash } from 'types-arguments/factory_contract';
 import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { AccountId, Hash } from 'types-arguments/factory_contract';
-import { setupApi, emit, revertedWith } from './setup';
+import { emit, revertedWith } from './setup';
 
 const zeroAddress = encodeAddress(
   '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -22,14 +22,15 @@ const zeroAddress = encodeAddress(
 const MINIMUM_LIQUIDITY = 1000;
 
 describe('Dex spec', () => {
+  let api: ApiPromise;
+  let deployer: KeyringPair;
+  let wallet: KeyringPair;
+
   let pairFactory: Pair_factory;
   let factoryFactory: Factory_factory;
   let routerFactory: Router_factory;
   let tokenFactory: Token_factory;
   let wnativeFactory: Wnative_factory;
-  let api: ApiPromise;
-  let deployer: KeyringPair;
-  let wallet: KeyringPair;
   // const alice = keyring.addFromUri('//Alice//stash');
   // const bob = keyring.addFromUri('//Bob//stash');
 
@@ -41,12 +42,8 @@ describe('Dex spec', () => {
 
   let gasRequired: bigint;
 
-  afterAll(() => {
-    api.disconnect();
-  });
-
   async function setup(): Promise<void> {
-    ({ api: api, alice: deployer, bob: wallet } = await setupApi());
+    ({ api, alice: deployer, bob: wallet } = globalThis.setup);
     pairFactory = new Pair_factory(api, deployer);
     const pair = new Pair((await pairFactory.new()).address, deployer, api);
     pairHash = pair.abi.info.source.wasmHash.toHex();

@@ -3,11 +3,14 @@
 
 #[openbrush::contract]
 pub mod master_chef_mock {
-    use farming::traits::{master_chef::{
-        events::*,
-        farming::*,
-        getters::*,
-    }, block::BlockInfo};
+    use farming::traits::{
+        block::BlockInfo,
+        master_chef::{
+            events::*,
+            farming::*,
+            getters::*,
+        },
+    };
     use ink_lang::codegen::{
         EmitEvent,
         Env,
@@ -33,7 +36,7 @@ pub mod master_chef_mock {
     }
 
     #[ink(event)]
-    pub struct Withdraw{
+    pub struct Withdraw {
         #[ink(topic)]
         pub user: AccountId,
         #[ink(topic)]
@@ -85,7 +88,7 @@ pub mod master_chef_mock {
     }
 
     #[ink(event)]
-    pub struct LogUpdatePool{
+    pub struct LogUpdatePool {
         #[ink(topic)]
         pub pool_id: u32,
         pub last_reward_block: BlockNumber,
@@ -96,7 +99,7 @@ pub mod master_chef_mock {
     #[ink(event)]
     pub struct DepositARSW {
         pub block_number: BlockNumber,
-        pub amount: Balance
+        pub amount: Balance,
     }
 
     #[ink(storage)]
@@ -146,7 +149,7 @@ pub mod master_chef_mock {
                 user,
                 pool_id,
                 amount,
-                to
+                to,
             })
         }
 
@@ -216,7 +219,6 @@ pub mod master_chef_mock {
                 lp_supply,
                 acc_arsw_per_share,
             })
-
         }
 
         fn _emit_deposit_arsw_event(&self, block_number: u32, amount: Balance) {

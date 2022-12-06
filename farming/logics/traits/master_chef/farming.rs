@@ -95,10 +95,10 @@ pub trait Farming:
         rewarder: Option<AccountId>,
         overwrite: bool,
     ) -> Result<(), FarmingError> {
+        self._update_all_pools()?;
         let pool_info = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_all_pools()?;
         self.data::<Data>().total_alloc_point = self
             .get_total_alloc_point()
             .checked_sub(pool_info.alloc_point)
@@ -171,7 +171,7 @@ pub trait Farming:
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_pool(pool_id)?;
+        self.update_pool(pool_id)?;
         let user = self.get_user_info(pool_id, to).unwrap_or_default();
         let user_amount = user
             .amount
@@ -224,7 +224,7 @@ pub trait Farming:
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_pool(pool_id)?;
+        self.update_pool(pool_id)?;
         let caller = Self::env().caller();
         let user = self
             .get_user_info(pool_id, caller)
@@ -269,7 +269,7 @@ pub trait Farming:
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_pool(pool_id)?;
+        self.update_pool(pool_id)?;
         let caller = Self::env().caller();
         let user = self
             .get_user_info(pool_id, caller)
@@ -326,7 +326,7 @@ pub trait Farming:
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_pool(pool_id)?;
+        self.update_pool(pool_id)?;
         let caller = Self::env().caller();
         let user = self
             .get_user_info(pool_id, caller)
@@ -444,12 +444,13 @@ pub trait Farming:
     fn _update_all_pools(&mut self) -> Result<(), FarmingError> {
         let lp_tokens = &self.data::<Data>().lp_tokens;
         for i in 0..lp_tokens.len() {
-            self._update_pool(i as u32)?;
+            self.update_pool(i as u32)?;
         }
         Ok(())
     }
 
-    fn _update_pool(&mut self, pool_id: u32) -> Result<(), FarmingError> {
+    #[ink(message)]
+    fn update_pool(&mut self, pool_id: u32) -> Result<(), FarmingError> {
         let mut pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
@@ -494,7 +495,7 @@ pub trait Farming:
             if period > MAX_PERIOD {
                 break
             }
-            if current_block <= self._period_max(period)? {
+            if current_block <= self.period_max(period)? {
                 arsw_reward = arsw_reward
                     .checked_add(
                         casted_mul(
@@ -503,7 +504,7 @@ pub trait Farming:
                                 .ok_or(FarmingError::SubUnderflow2)?
                                 as u128
                                 * pool_info.alloc_point as u128,
-                            self._arsw_per_block(period)?,
+                            self.arsw_per_block(period)?,
                         )
                         .checked_div(total_alloc_point.into())
                         .ok_or(FarmingError::DivByZero1)?
@@ -515,12 +516,12 @@ pub trait Farming:
                 arsw_reward = arsw_reward
                     .checked_add(
                         casted_mul(
-                            self._period_max(period)?
+                            self.period_max(period)?
                                 .checked_sub(last_block.into())
                                 .ok_or(FarmingError::SubUnderflow3)?
                                 as u128
                                 * pool_info.alloc_point as u128,
-                            self._arsw_per_block(period)? as u128,
+                            self.arsw_per_block(period)? as u128,
                         )
                         .checked_div(total_alloc_point.into())
                         .ok_or(FarmingError::DivByZero2)?
@@ -529,7 +530,7 @@ pub trait Farming:
                     )
                     .ok_or(FarmingError::AddOverflow5)?;
 
-                last_block = self._period_max(period)?;
+                last_block = self.period_max(period)?;
             }
 
             period += 1;
@@ -556,7 +557,8 @@ pub trait Farming:
             / BLOCK_PER_PERIOD)
     }
 
-    fn _period_max(&self, period: u32) -> Result<u32, FarmingError> {
+    #[ink(message)]
+    fn period_max(&self, period: u32) -> Result<u32, FarmingError> {
         Ok(self
             .get_farming_origin_block()
             .checked_add(
@@ -568,7 +570,8 @@ pub trait Farming:
             - 1)
     }
 
-    fn _arsw_per_block(&self, period: u32) -> Result<Balance, FarmingError> {
+    #[ink(message)]
+    fn arsw_per_block(&self, period: u32) -> Result<Balance, FarmingError> {
         if period > MAX_PERIOD {
             return Ok(0)
         }

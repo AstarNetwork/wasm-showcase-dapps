@@ -1,6 +1,9 @@
 use crate::traits::rewarder::rewarder::Data;
 use ink_env::AccountId;
-use openbrush::traits::{Storage, Balance};
+use openbrush::traits::{
+    Balance,
+    Storage,
+};
 
 #[openbrush::trait_definition]
 pub trait RewarderGetters: Storage<Data> {

@@ -1,5 +1,7 @@
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
+import { ReturnNumber } from '@supercolony/typechain-types';
+import { expect } from 'chai';
 // Create a new instance of contract
 const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
@@ -21,4 +23,35 @@ export async function setupApi(): Promise<{
 
 export function parseUnits(amount: bigint | number, decimals = 18): bigint {
   return BigInt(amount) * 10n ** BigInt(decimals);
+}
+
+export function emit(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: { events?: any },
+  name: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types
+  args: any,
+  index = 0,
+): void {
+  const events = result.events.filter(
+    (event: { name: string }) => event.name === name,
+  );
+  const event = events[index];
+  for (const key of Object.keys(event.args)) {
+    if (event.args[key] instanceof ReturnNumber) {
+      event.args[key] = event.args[key].toNumber();
+    }
+  }
+  expect(event).eql({
+    name,
+    args,
+  });
+}
+
+export function revertedWith(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: { value: { err?: any } },
+  errorTitle: string,
+): void {
+  expect(result.value.err).to.have.property(errorTitle);
 }

@@ -15,8 +15,7 @@ import Router from '../types/contracts/router_contract';
 import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { AccountId, Hash } from 'types-arguments/factory_contract';
-import { ReturnNumber } from '@supercolony/typechain-types';
-import { setupApi } from './setup';
+import { setupApi, emit } from './setup';
 
 use(chaiAsPromised);
 
@@ -62,8 +61,22 @@ describe('Dex spec', () => {
     tokenFactory = new Token_factory(api, deployer);
     const totalSupply = new BN(10000000);
 
-    const tokenAaddress = (await tokenFactory.new(totalSupply)).address;
-    const tokenBaddress = (await tokenFactory.new(totalSupply)).address;
+    const tokenAaddress = (
+      await tokenFactory.new(
+        totalSupply,
+        'TOKEN_A' as unknown as string[],
+        'TKNA' as unknown as string[],
+        18,
+      )
+    ).address;
+    const tokenBaddress = (
+      await tokenFactory.new(
+        totalSupply,
+        'TOKEN_B' as unknown as string[],
+        'TKNB' as unknown as string[],
+        18,
+      )
+    ).address;
     const [token0Address, token1Address] =
       tokenAaddress > tokenBaddress
         ? [tokenBaddress, tokenAaddress]
@@ -96,9 +109,9 @@ describe('Dex spec', () => {
     await setupPsp22();
     expect((await factory.query.feeTo()).value).to.equal(zeroAddress);
     await expect(factory.tx.setFeeTo(token0.address)).to.eventually.be.rejected;
-    const { gasRequired } = await factory
+    ({ gasRequired } = await factory
       .withSigner(wallet)
-      .query.setFeeTo(token0.address);
+      .query.setFeeTo(token0.address));
     await factory
       .withSigner(wallet)
       .tx.setFeeTo(token0.address, { gasLimit: gasRequired });
@@ -109,9 +122,9 @@ describe('Dex spec', () => {
     expect((await factory.query.feeToSetter()).value).to.equal(wallet.address);
     await expect(factory.tx.setFeeToSetter(token0.address)).to.eventually.be
       .rejected;
-    const { gasRequired } = await factory
+    ({ gasRequired } = await factory
       .withSigner(wallet)
-      .query.setFeeToSetter(token0.address);
+      .query.setFeeToSetter(token0.address));
     await factory
       .withSigner(wallet)
       .tx.setFeeToSetter(token0.address, { gasLimit: gasRequired });
@@ -124,10 +137,10 @@ describe('Dex spec', () => {
       await factory.query.createPair(token0.address, token1.address)
     ).value.ok;
     expect(expectedAddress).not.equal(zeroAddress);
-    const { gasRequired } = await factory.query.createPair(
+    ({ gasRequired } = await factory.query.createPair(
       token0.address,
       token1.address,
-    );
+    ));
     const result = await factory.tx.createPair(token0.address, token1.address, {
       gasLimit: gasRequired,
     });
@@ -148,11 +161,7 @@ describe('Dex spec', () => {
       token1.address,
     );
     pair = new Pair(pairAddress.value as string, deployer, api);
-    gasRequired = (await token0.query.transfer(
-      pair.address,
-      liqudity,
-      [],
-    )).gasRequired;
+    ({ gasRequired } = await token0.query.transfer(pair.address, liqudity, []));
     await token0.tx.transfer(pair.address, liqudity, [], {
       gasLimit: gasRequired,
     });
@@ -162,8 +171,10 @@ describe('Dex spec', () => {
     expect(
       (await pair.query.balanceOf(wallet.address)).value.toNumber(),
     ).to.equal(0);
-    gasRequired = (await pair.query.mint(wallet.address)).gasRequired;
-    const result = await pair.tx.mint(wallet.address, { gasLimit: gasRequired });
+    ({ gasRequired } = await pair.query.mint(wallet.address));
+    const result = await pair.tx.mint(wallet.address, {
+      gasLimit: gasRequired,
+    });
     emit(result, 'Mint', {
       sender: deployer.address,
       amount0: liqudity,
@@ -176,14 +187,18 @@ describe('Dex spec', () => {
 
   it('can swap tokens', async () => {
     const token1Amount = 1020;
-    gasRequired = (await token0.query.transfer(pair.address, token1Amount, [])).gasRequired;
+    ({ gasRequired } = await token0.query.transfer(
+      pair.address,
+      token1Amount,
+      [],
+    ));
     await token0.tx.transfer(pair.address, token1Amount, [], {
       gasLimit: gasRequired,
     });
     expect(
       (await token1.query.balanceOf(wallet.address)).value.toNumber(),
     ).to.equal(0);
-    gasRequired = (await pair.query.swap(0, 900, wallet.address)).gasRequired;
+    ({ gasRequired } = await pair.query.swap(0, 900, wallet.address));
     const result = await pair.tx.swap(0, 900, wallet.address, {
       gasLimit: gasRequired,
     });
@@ -205,15 +220,15 @@ describe('Dex spec', () => {
       .value.rawNumber;
     const beforeToken2Balance = (await token1.query.balanceOf(wallet.address))
       .value.rawNumber;
-    gasRequired = (await pair
+    ({ gasRequired } = await pair
       .withSigner(wallet)
-      .query.transfer(pair.address, 2000, [])).gasRequired;
+      .query.transfer(pair.address, 2000, []));
     await pair
       .withSigner(wallet)
       .tx.transfer(pair.address, 2000, [], { gasLimit: gasRequired });
-    gasRequired = (await pair
+    ({ gasRequired } = await pair
       .withSigner(wallet)
-      .query.burn(wallet.address)).gasRequired;
+      .query.burn(wallet.address));
     const result = await pair
       .withSigner(wallet)
       .tx.burn(wallet.address, { gasLimit: gasRequired });
@@ -240,11 +255,11 @@ describe('Dex spec', () => {
   it('can add liqudity via router', async () => {
     await setupRouter();
     const deadline = '111111111111111111';
-    gasRequired = (await token0.query.approve(router.address, 10000)).gasRequired;
+    ({ gasRequired } = await token0.query.approve(router.address, 10000));
     await token0.tx.approve(router.address, 10000, {
       gasLimit: gasRequired,
     });
-    gasRequired = (await router.query.addLiquidityNative(
+    ({ gasRequired } = await router.query.addLiquidityNative(
       token0.address,
       10000,
       10000,
@@ -254,7 +269,7 @@ describe('Dex spec', () => {
       {
         value: 10000,
       },
-    )).gasRequired;
+    ));
     await router.tx.addLiquidityNative(
       token0.address,
       10000,
@@ -318,20 +333,20 @@ describe('Dex spec', () => {
 
   it('can swapExactTokensForTokens via router', async () => {
     const deadline = '111111111111111111';
-    gasRequired = (await wnative.query.deposit({ value: 10000 })).gasRequired;
+    ({ gasRequired } = await wnative.query.deposit({ value: 10000 }));
     await wnative.tx.deposit({ gasLimit: gasRequired, value: 10000 });
-    gasRequired = (await wnative.query.approve(router.address, 10000)).gasRequired;
+    ({ gasRequired } = await wnative.query.approve(router.address, 10000));
     await wnative.tx.approve(router.address, 10000, {
       gasLimit: gasRequired,
     });
 
-    gasRequired = (await router.query.swapExactTokensForTokens(
+    ({ gasRequired } = await router.query.swapExactTokensForTokens(
       10000,
       1000,
       [wnative.address, token0.address],
       wallet.address,
       deadline,
-    )).gasRequired;
+    ));
 
     await router.tx.swapExactTokensForTokens(
       10000,
@@ -345,18 +360,18 @@ describe('Dex spec', () => {
 
   it('can swapTokensForExactTokens via router', async () => {
     const deadline = '111111111111111111';
-    gasRequired = (await wnative.query.deposit({ value: 100000 })).gasRequired;
+    ({ gasRequired } = await wnative.query.deposit({ value: 100000 }));
     await wnative.tx.deposit({ gasLimit: gasRequired, value: 100000 });
     await wnative.tx.approve(router.address, 100000, {
       gasLimit: gasRequired,
     });
-    gasRequired = (await router.query.swapTokensForExactTokens(
+    ({ gasRequired } = await router.query.swapTokensForExactTokens(
       1000,
       100000,
       [wnative.address, token0.address],
       wallet.address,
       deadline,
-    )).gasRequired;
+    ));
     await router.tx.swapTokensForExactTokens(
       1000,
       100000,
@@ -369,12 +384,12 @@ describe('Dex spec', () => {
 
   it('can add liqudity more via router', async () => {
     const deadline = '111111111111111111';
-    gasRequired = (await token0.query.approve(router.address, 10000)).gasRequired;
+    ({ gasRequired } = await token0.query.approve(router.address, 10000));
     await token0.tx.approve(router.address, 10000, {
       gasLimit: gasRequired,
     });
     const balance = await getBalance(deployer.address);
-    gasRequired = (await router.query.addLiquidityNative(
+    ({ gasRequired } = await router.query.addLiquidityNative(
       token0.address,
       10000,
       0,
@@ -384,7 +399,7 @@ describe('Dex spec', () => {
       {
         value: 1000000000000000,
       },
-    )).gasRequired;
+    ));
     await router.tx.addLiquidityNative(
       token0.address,
       10000,
@@ -396,7 +411,7 @@ describe('Dex spec', () => {
         gasLimit: gasRequired,
         value: 1000000000000000,
       },
-    )
+    );
     const afterBalance = await getBalance(deployer.address);
     expect(balance.sub(afterBalance).toNumber()).lt(1000000000000000);
     expect((await factory.query.allPairsLength()).value).to.equal(2);
@@ -404,7 +419,7 @@ describe('Dex spec', () => {
 
   it('can remove liqudity via router', async () => {
     const deadline = '111111111111111111';
-    gasRequired = (await token0.query.approve(router.address, 10000)).gasRequired;
+    ({ gasRequired } = await token0.query.approve(router.address, 10000));
     await token0.tx.approve(router.address, 10000, {
       gasLimit: gasRequired,
     });
@@ -419,14 +434,14 @@ describe('Dex spec', () => {
       gasLimit: gasRequired,
     });
     const balance = await getBalance(wallet.address);
-    gasRequired = (await router.query.removeLiquidityNative(
+    ({ gasRequired } = await router.query.removeLiquidityNative(
       token0.address,
       10000,
       0,
       0,
       wallet.address,
       deadline,
-    )).gasRequired;
+    ));
     await router.tx.removeLiquidityNative(
       token0.address,
       10000,
@@ -440,24 +455,9 @@ describe('Dex spec', () => {
     expect(afterBalance.sub(balance).toNumber()).gt(10000);
     expect((await factory.query.allPairsLength()).value).to.equal(2);
   });
+
   async function getBalance(address: AccountId): Promise<BN> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ((await api.query.system.account(address)) as any).data.free;
   }
 });
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function emit(result: { events?: any }, name: string, args: any): void {
-  const event = result.events.find(
-    (event: { name: string }) => event.name === name,
-  );
-  for (const key of Object.keys(event.args)) {
-    if (event.args[key] instanceof ReturnNumber) {
-      event.args[key] = event.args[key].toNumber();
-    }
-  }
-  expect(event).eql({
-    name,
-    args,
-  });
-}

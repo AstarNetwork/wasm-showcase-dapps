@@ -19,7 +19,7 @@ index 48cca0b..75c17b1 100644
  declare function _genValidGasLimitAndValue(gasLimitAndValue?: GasLimitAndValue): GasLimitAndValue;
  export declare function handleReturnType(result: any, typeDescription: any): any;
 diff --git a/node_modules/@supercolony/typechain-types/dist/src/query.js b/node_modules/@supercolony/typechain-types/dist/src/query.js
-index 1f5e337..e60373f 100644
+index 1f5e337..a23cc56 100644
 --- a/node_modules/@supercolony/typechain-types/dist/src/query.js
 +++ b/node_modules/@supercolony/typechain-types/dist/src/query.js
 @@ -79,12 +79,12 @@ function queryJSON(nativeContract, callerAddress, title, args, gasLimitAndValue,
@@ -117,6 +117,19 @@ index 1f5e337..e60373f 100644
      if (typeDescription.name === 'Array') {
          Object.entries(result).forEach(function (_a) {
              var key = _a[0], value = _a[1];
+@@ -236,6 +242,12 @@ function handleReturnType(result, typeDescription) {
+         });
+         return result;
+     }
++    if (typeDescription.name === 'Option') {
++        Object.entries(result).forEach(function (obj) {
++            result[obj[0]] = handleReturnType(obj[1], typeDescription.body[0].body[obj[0]]);
++        });
++        return result;
++    }
+     Object.entries(result).forEach(function (obj) {
+         result[obj[0]] = handleReturnType(obj[1], typeDescription.body[obj[0]]);
+     });
 diff --git a/node_modules/@supercolony/typechain-types/dist/src/tx.d.ts b/node_modules/@supercolony/typechain-types/dist/src/tx.d.ts
 index 917eefa..cfcb908 100644
 --- a/node_modules/@supercolony/typechain-types/dist/src/tx.d.ts
@@ -183,3 +196,29 @@ index e0685f6..4991425 100644
                          if (result.status.isInBlock) {
                              actionStatus.blockHash = result.status.asInBlock.toHex();
                          }
+diff --git a/node_modules/@supercolony/typechain-types/dist/src/types.d.ts b/node_modules/@supercolony/typechain-types/dist/src/types.d.ts
+index 1538d98..e637e30 100644
+--- a/node_modules/@supercolony/typechain-types/dist/src/types.d.ts
++++ b/node_modules/@supercolony/typechain-types/dist/src/types.d.ts
+@@ -65,6 +65,7 @@ export declare class ReturnNumber {
+     toString(): string;
+     toHuman(): string;
+     toNumber(): number;
++    toBigInt(): bigint;
+     static ToBN(value: number | string): BN;
+ }
+ export interface ReturnedEvent {
+diff --git a/node_modules/@supercolony/typechain-types/dist/src/types.js b/node_modules/@supercolony/typechain-types/dist/src/types.js
+index d19aa99..f2aee0c 100644
+--- a/node_modules/@supercolony/typechain-types/dist/src/types.js
++++ b/node_modules/@supercolony/typechain-types/dist/src/types.js
+@@ -61,6 +61,9 @@ var ReturnNumber = /** @class */ (function () {
+     ReturnNumber.prototype.toNumber = function () {
+         return this.rawNumber.toNumber();
+     };
++    ReturnNumber.prototype.toBigInt = function () {
++        return BigInt(this.toString());
++    }
+     ReturnNumber.ToBN = function (value) {
+         return new ReturnNumber(value).rawNumber;
+     };

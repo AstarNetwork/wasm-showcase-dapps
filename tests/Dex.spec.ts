@@ -1,5 +1,4 @@
-import { expect, use } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
+import { expect } from '@jest/globals';
 import { encodeAddress } from '@polkadot/keyring';
 import BN from 'bn.js';
 import Factory_factory from '../types/constructors/factory_contract';
@@ -15,9 +14,7 @@ import Router from '../types/contracts/router_contract';
 import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { AccountId, Hash } from 'types-arguments/factory_contract';
-import { setupApi, emit } from './setup';
-
-use(chaiAsPromised);
+import { setupApi, emit, revertedWith } from './setup';
 
 const zeroAddress = encodeAddress(
   '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -43,6 +40,10 @@ describe('Dex spec', () => {
   let wnative: Wnative;
 
   let gasRequired: bigint;
+
+  afterAll(() => {
+    api.disconnect();
+  });
 
   async function setup(): Promise<void> {
     ({ api: api, alice: deployer, bob: wallet } = await setupApi());
@@ -100,43 +101,42 @@ describe('Dex spec', () => {
 
   it('feeTo, feeToSetter, allPairsLength', async () => {
     await setup();
-    expect((await factory.query.feeTo()).value).to.equal(zeroAddress);
-    expect((await factory.query.feeToSetter()).value).to.equal(wallet.address);
-    expect((await factory.query.allPairsLength()).value).to.equal(0);
+    expect((await factory.query.feeTo()).value).toBe(zeroAddress);
+    expect((await factory.query.feeToSetter()).value).toBe(wallet.address);
+    expect((await factory.query.allPairsLength()).value).toBe(0);
   });
 
   it('set fee', async () => {
     await setupPsp22();
-    expect((await factory.query.feeTo()).value).to.equal(zeroAddress);
-    await expect(factory.tx.setFeeTo(token0.address)).to.eventually.be.rejected;
+    expect((await factory.query.feeTo()).value).toBe(zeroAddress);
+    revertedWith(await factory.query.setFeeTo(token0.address), 'callerIsNotFeeSetter');
     ({ gasRequired } = await factory
       .withSigner(wallet)
       .query.setFeeTo(token0.address));
     await factory
       .withSigner(wallet)
       .tx.setFeeTo(token0.address, { gasLimit: gasRequired });
-    expect((await factory.query.feeTo()).value).to.equal(token0.address);
+    expect((await factory.query.feeTo()).value).toBe(token0.address);
   });
 
   it('set fee setter', async () => {
-    expect((await factory.query.feeToSetter()).value).to.equal(wallet.address);
-    await expect(factory.tx.setFeeToSetter(token0.address)).to.eventually.be
-      .rejected;
+    expect((await factory.query.feeToSetter()).value).toBe(wallet.address);
+    revertedWith(await factory.query.setFeeToSetter(token0.address), 'callerIsNotFeeSetter');
     ({ gasRequired } = await factory
       .withSigner(wallet)
       .query.setFeeToSetter(token0.address));
     await factory
       .withSigner(wallet)
       .tx.setFeeToSetter(token0.address, { gasLimit: gasRequired });
-    expect((await factory.query.feeToSetter()).value).to.equal(token0.address);
+    expect((await factory.query.feeToSetter()).value).toBe(token0.address);
   });
 
   it('create pair', async () => {
-    expect((await factory.query.allPairsLength()).value).to.equal(0);
+    expect((await factory.query.allPairsLength()).value).toBe(0);
     const expectedAddress = (
       await factory.query.createPair(token0.address, token1.address)
     ).value.ok;
-    expect(expectedAddress).not.equal(zeroAddress);
+    expect(expectedAddress).not.toBe(zeroAddress);
     ({ gasRequired } = await factory.query.createPair(
       token0.address,
       token1.address,
@@ -150,7 +150,7 @@ describe('Dex spec', () => {
       pair: expectedAddress,
       pairLen: 1,
     });
-    expect((await factory.query.allPairsLength()).value).to.equal(1);
+    expect((await factory.query.allPairsLength()).value).toBe(1);
   });
 
   let pair: Pair;
@@ -168,9 +168,9 @@ describe('Dex spec', () => {
     await token1.tx.transfer(pair.address, liqudity, [], {
       gasLimit: gasRequired,
     });
-    expect(
-      (await pair.query.balanceOf(wallet.address)).value.toNumber(),
-    ).to.equal(0);
+    expect((await pair.query.balanceOf(wallet.address)).value.toNumber()).toBe(
+      0,
+    );
     ({ gasRequired } = await pair.query.mint(wallet.address));
     const result = await pair.tx.mint(wallet.address, {
       gasLimit: gasRequired,
@@ -180,9 +180,9 @@ describe('Dex spec', () => {
       amount0: liqudity,
       amount1: liqudity,
     });
-    expect(
-      (await pair.query.balanceOf(wallet.address)).value.toNumber(),
-    ).to.equal(liqudity - MINIMUM_LIQUIDITY);
+    expect((await pair.query.balanceOf(wallet.address)).value.toNumber()).toBe(
+      liqudity - MINIMUM_LIQUIDITY,
+    );
   });
 
   it('can swap tokens', async () => {
@@ -197,7 +197,7 @@ describe('Dex spec', () => {
     });
     expect(
       (await token1.query.balanceOf(wallet.address)).value.toNumber(),
-    ).to.equal(0);
+    ).toBe(0);
     ({ gasRequired } = await pair.query.swap(0, 900, wallet.address));
     const result = await pair.tx.swap(0, 900, wallet.address, {
       gasLimit: gasRequired,
@@ -212,7 +212,7 @@ describe('Dex spec', () => {
     });
     expect(
       (await token1.query.balanceOf(wallet.address)).value.toNumber(),
-    ).to.equal(900);
+    ).toBe(900);
   });
 
   it('can burn LP token', async () => {
@@ -244,12 +244,12 @@ describe('Dex spec', () => {
       (await token0.query.balanceOf(wallet.address)).value.rawNumber.sub(
         beforeToken1Balance,
       ),
-    ).to.eql(new BN(lockedToken1Balance));
+    ).toEqual(new BN(lockedToken1Balance));
     expect(
       (await token1.query.balanceOf(wallet.address)).value.rawNumber.sub(
         beforeToken2Balance,
       ),
-    ).to.eql(new BN(lockedToken2Balance));
+    ).toEqual(new BN(lockedToken2Balance));
   });
 
   it('can add liqudity via router', async () => {
@@ -282,7 +282,7 @@ describe('Dex spec', () => {
         value: 10000,
       },
     );
-    expect((await factory.query.allPairsLength()).value).to.equal(2);
+    expect((await factory.query.allPairsLength()).value).toBe(2);
   });
 
   it('can swapExactNativeForTokens via router', async () => {
@@ -413,8 +413,8 @@ describe('Dex spec', () => {
       },
     );
     const afterBalance = await getBalance(deployer.address);
-    expect(balance.sub(afterBalance).toNumber()).lt(1000000000000000);
-    expect((await factory.query.allPairsLength()).value).to.equal(2);
+    expect(balance.sub(afterBalance).toNumber()).toBeLessThan(1000000000000000);
+    expect((await factory.query.allPairsLength()).value).toBe(2);
   });
 
   it('can remove liqudity via router', async () => {
@@ -452,8 +452,8 @@ describe('Dex spec', () => {
       { gasLimit: gasRequired },
     );
     const afterBalance = await getBalance(wallet.address);
-    expect(afterBalance.sub(balance).toNumber()).gt(10000);
-    expect((await factory.query.allPairsLength()).value).to.equal(2);
+    expect(afterBalance.sub(balance).toNumber()).toBeGreaterThan(10000);
+    expect((await factory.query.allPairsLength()).value).toBe(2);
   });
 
   async function getBalance(address: AccountId): Promise<BN> {

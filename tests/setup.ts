@@ -1,7 +1,7 @@
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ReturnNumber } from '@supercolony/typechain-types';
-import { expect } from 'chai';
+import { expect } from '@jest/globals';
 // Create a new instance of contract
 const wsProvider = new WsProvider('ws://127.0.0.1:9944');
 // Create a keyring instance
@@ -42,7 +42,7 @@ export function emit(
       event.args[key] = event.args[key].toNumber();
     }
   }
-  expect(event).eql({
+  expect(event).toEqual({
     name,
     args,
   });
@@ -51,7 +51,12 @@ export function emit(
 export function revertedWith(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   result: { value: { err?: any } },
-  errorTitle: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types
+  errorTitle: any,
 ): void {
-  expect(result.value.err).to.have.property(errorTitle);
+  if (typeof errorTitle === 'object') {
+    expect(result.value).toHaveProperty('err', errorTitle);
+  } else {
+    expect(result.value.err).toHaveProperty(errorTitle);
+  }
 }

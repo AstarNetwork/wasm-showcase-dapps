@@ -7,7 +7,7 @@ import Token from '../types/contracts/psp22_token';
 import Farming from '../types/contracts/master_chef_mock';
 import Rewarder from '../types/contracts/rewarder_contract';
 import { emit, parseUnits, revertedWith, setupApi } from './setup';
-import { expect } from 'chai';
+import { expect } from '@jest/globals';
 describe('Farming', () => {
   let api: ApiPromise;
   let deployer: KeyringPair;
@@ -16,6 +16,13 @@ describe('Farming', () => {
   let rewarder: Rewarder;
   let originBlock: number;
   const BLOCK_PER_PERIOD = 215_000;
+  const FIRST_PERIOD_REWERD_SUPPLY = 151629858171523000000n;
+  const ACC_ARSW_PRECISION = 1_000_000_000_000n;
+  const MAX_PERIOD = 23;
+
+  afterAll(() => {
+    api.disconnect();
+  });
 
   async function setup(): Promise<void> {
     ({ api: api, alice: deployer } = await setupApi());
@@ -57,27 +64,29 @@ describe('Farming', () => {
   describe('getPeriod', () => {
     it('successfully get 1st block of Period-1', async () => {
       await setup();
-      const firstBlockOfPeriodOne = originBlock + 215_000;
+      const firstBlockOfPeriodOne = getFirstBlock(1);
       const {
         value: { ok: period },
       } = await farming.query.getPeriod(firstBlockOfPeriodOne);
-      expect(period).equal(1);
+      expect(period).toBe(1);
     });
 
     it('successfully get medium block of Period-1', async () => {
-      const blockPeriodOne = originBlock + 215_000 + 100_000;
+      const blockPeriodOne = Math.floor(
+        (getFirstBlock(1) + getFirstBlock(2)) / 2,
+      );
       const {
         value: { ok: period },
       } = await farming.query.getPeriod(blockPeriodOne);
-      expect(period).equals(1);
+      expect(period).toBe(1);
     });
 
     it('successfully get end block of Period-0', async () => {
-      const endBlockOfPeriodZero = originBlock + BLOCK_PER_PERIOD - 1;
+      const endBlockOfPeriodZero = getFirstBlock(1) - 1;
       const {
         value: { ok: period },
       } = await farming.query.getPeriod(endBlockOfPeriodZero);
-      expect(period).equals(0);
+      expect(period).toBe(0);
     });
 
     it('revert if the blockNumber is lower than the ARTHSWAP_ORIGIN_BLOCK', async () => {
@@ -91,49 +100,32 @@ describe('Farming', () => {
 
   describe('periodMax', () => {
     it('successfully get max block of Period-0', async () => {
-      const expectedBlock = originBlock + BLOCK_PER_PERIOD - 1;
+      const expectedBlock = getFirstBlock(1) - 1;
       const {
         value: { ok: maxBlock },
       } = await farming.query.periodMax(0);
-      expect(maxBlock).equals(expectedBlock);
+      expect(maxBlock).toBe(expectedBlock);
     });
 
     it('successfully get max block of Period-1', async () => {
-      const expectedBlock = originBlock + 2 * BLOCK_PER_PERIOD - 1;
+      const expectedBlock = getFirstBlock(2) - 1;
       const {
         value: { ok: maxBlock },
       } = await farming.query.periodMax(1);
-      expect(maxBlock).to.be.equal(expectedBlock);
+      expect(maxBlock).toBe(expectedBlock);
     });
   });
 
   describe('ARSWPerBlock', () => {
-    it('Return correct amount of period-0', async () => {
-      const {
-        value: { ok },
-      } = await farming.query.arswPerBlock(0);
-      expect(ok.toHuman()).equals('151629858171523000000');
-    });
-    it('Return correct amount of period-1', async () => {
-      const {
-        value: { ok },
-      } = await farming.query.arswPerBlock(1);
-      expect(ok.toHuman()).to.be.equal('136466872354370700000');
-    });
-
-    it('Return correct amount of period-23', async () => {
-      const {
-        value: { ok },
-      } = await farming.query.arswPerBlock(23);
-      expect(ok.toHuman()).to.be.equal('13438860500658934856');
-    });
-
-    it('Return amount 0 of period-24', async () => {
-      const {
-        value: { ok },
-      } = await farming.query.arswPerBlock(24);
-      expect(ok.toHuman()).to.be.equal('0');
-    });
+    it.each([0, 1, 23, 24])(
+      'Return correct amount of period-%s',
+      async (period: number) => {
+        const {
+          value: { ok },
+        } = await farming.query.arswPerBlock(period);
+        expect(ok.toHuman()).toBe(getExpectedArswPerBlock(period));
+      },
+    );
   });
 
   describe('Add', () => {
@@ -267,11 +259,23 @@ describe('Farming', () => {
   describe('PoolLength', () => {
     it('PoolLength should execute', async () => {
       const { value: poolLength } = await farming.query.poolLength();
-      expect(poolLength).equals(2);
+      expect(poolLength).toBe(2);
     });
   });
 
   async function advanceBlock(): Promise<void> {
     await farming.tx.increaseBlockNumber(1, { gasLimit: 30_000_000_000n });
+  }
+  function getFirstBlock(period: number): number {
+    return originBlock + BLOCK_PER_PERIOD * period;
+  }
+  function getExpectedArswPerBlock(period: number): string {
+    const bigintPeriod = BigInt(period);
+    return period > MAX_PERIOD
+      ? '0'
+      : (
+          (FIRST_PERIOD_REWERD_SUPPLY * 9n ** bigintPeriod) /
+          10n ** bigintPeriod
+        ).toString();
   }
 });

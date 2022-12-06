@@ -54,13 +54,6 @@ describe('Farming', () => {
     );
     aplo = new Token(aploAddress, deployer, api);
     lp = new Token(lpAddress, deployer, api);
-    const { gasRequired } = await lp.query.mint(
-      bob.address,
-      parseUnits(10_000).toString(),
-    );
-    await lp.tx.mint(bob.address, parseUnits(10_000).toString(), {
-      gasLimit: gasRequired,
-    });
     dummy = new Token(dummyAddress, deployer, api);
     const farmingFactory = new Farming_factory(api, deployer);
     const { address: farmingAddress } = await farmingFactory.new(aploAddress);
@@ -73,6 +66,20 @@ describe('Farming', () => {
     );
     rewarder = new Rewarder(rewarderAddress, deployer, api);
     ({ value: originBlock } = await farming.query.getFarmingOriginBlock());
+    let { gasRequired } = await aplo.query.mint(
+      farming.address,
+      parseUnits(1_000_000_000).toString(),
+    );
+    await aplo.tx.mint(farming.address, parseUnits(1_000_000_000).toString(), {
+      gasLimit: gasRequired,
+    });
+    ({ gasRequired } = await lp.query.mint(
+      bob.address,
+      parseUnits(10_000).toString(),
+    ));
+    await lp.tx.mint(bob.address, parseUnits(10_000).toString(), {
+      gasLimit: gasRequired,
+    });
   }
 
   describe('getPeriod', () => {
@@ -327,6 +334,43 @@ describe('Farming', () => {
         await farming.withSigner(bob).query.deposit(2, 10, bob.address),
         'poolNotFound',
       );
+    });
+  });
+
+  describe('Withdraw', () => {
+    it('Should revert if invalid pool', async () => {
+      revertedWith(
+        await farming.withSigner(bob).query.withdraw(2, 10, bob.address),
+        'poolNotFound',
+      );
+    });
+
+    it('reverts if withdraw 0 amount', async () => {
+      revertedWith(
+        await farming.withSigner(bob).query.withdraw(0, 0, bob.address),
+        'zeroWithdrawal',
+      );
+    });
+    it('successfuly withdraw 10 amount', async () => {
+      await advanceBlock();
+      const { gasRequired } = await farming
+        .withSigner(bob)
+        .query.withdraw(0, 10, bob.address);
+      const tx = await changeTokenBalances(
+        () =>
+          farming
+            .withSigner(bob)
+            .tx.withdraw(0, 10, bob.address, { gasLimit: gasRequired }),
+        lp,
+        [bob, farming],
+        ['10', '-10'],
+      );
+      emit(tx, 'Withdraw', {
+        poolId: 0,
+        amount: 10,
+        to: bob.address,
+        user: bob.address,
+      });
     });
   });
 

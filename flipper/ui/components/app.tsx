@@ -53,7 +53,7 @@ const Home: NextPage = () => {
     setAccount(event.target.value);
   };
 
-  const query = async (api: ApiPromise, contract: ContractPromise, address: string, account: string) => {
+  const query = async (api: ApiPromise, contract: ContractPromise, address: string) => {
     // (We perform the send from an account, here using Alice's address)
     const { gasRequired, result, output } = await contract.query.get(
       address,
@@ -114,7 +114,7 @@ const Home: NextPage = () => {
         }
       });
 
-    await query(api, contract, address, account);
+    await query(api, contract, address);
   }
 
 

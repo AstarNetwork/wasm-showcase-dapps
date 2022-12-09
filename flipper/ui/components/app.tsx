@@ -15,8 +15,9 @@ import styles from '../styles/Home.module.css'
 import abiData from './abi'
 
 const WS_PROVIDER = 'ws://127.0.0.1:9944'
-const gasLimit = 18750000000
+// const WS_PROVIDER = 'wss://shibuya-rpc.dwellir.com'
 const proofSize = 131072
+const refTime = 6219235328
 const storageDepositLimit = null
 
 const Home: NextPage = () => {
@@ -59,7 +60,7 @@ const Home: NextPage = () => {
       address,
       {
         gasLimit: api.registry.createType('WeightV2', {
-          refTime: gasLimit,
+          refTime,
           proofSize,
         }) as WeightV2,
         storageDepositLimit,
@@ -105,7 +106,13 @@ const Home: NextPage = () => {
     // with the same rules as applied in the API (As with the read example,
     // additional params, if required can follow)
     await contract.tx
-      .flip({ storageDepositLimit, gasLimit })
+      .flip({
+        gasLimit: api.registry.createType('WeightV2', {
+          refTime,
+          proofSize,
+        }) as WeightV2,
+        storageDepositLimit
+      })
       .signAndSend(account, async (res) => {
         if (res.status.isInBlock) {
           console.log('in a block')

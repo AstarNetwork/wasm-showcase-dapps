@@ -12,12 +12,8 @@ contributions are welcome:
 This repository host the first version of DEX. For latest DEX please go to the new repository: [Swanky dApps - DEX](https://github.com/swanky-dapps/dex)
 
 ### Farming
-A farming dApp line by line implementation of [ArthSwap master chef](https://github.com/ArthSwap/ArthSwap-MasterChef) adapted from 
-[sushiswap](https://github.com/sushiswap/sushiswap/blob/archieve/canary/contracts/MasterChefV2.sol) 
-
-### Fliper + UI 
-This is an hello world! example with a basic flipper contract and an UI to interact with it.
-The UI is a react app and uses polkadotjs to interact with the node
+A farming dApp line by line implementation of [ArthSwap master chef](https://github.com/ArthSwap/ArthSwap-MasterChef) adapted from
+[sushiswap](https://github.com/sushiswap/sushiswap/blob/archieve/canary/contracts/MasterChefV2.sol)
 
 #### DAO
 On Chain governance based on [Governor](https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/governance) contracts of OpenZeppelin
@@ -27,7 +23,7 @@ The test folder contains integration tests for the contracts. Tests are made wit
 
 **Runs the tests**
 1. Run a local node \
-   Please use [swanky-node](https://github.com/AstarNetwork/swanky-node/releases) 
+   Please use [swanky-node](https://github.com/AstarNetwork/swanky-node/releases)
 2. The integration tests uses typechain. Node version should be >= 16
      ```bash
      yarn install

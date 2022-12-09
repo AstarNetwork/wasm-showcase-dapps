@@ -9,8 +9,7 @@ contributions are welcome:
 
 ## dApps
 #### Uniswap-V2 - DEX
-This folder contains the line by line implementation of [uniswap-v2 core](https://github.com/Uniswap/v2-core) + [uniswap-v2 periphery](https://github.com/Uniswap/v2-periphery) & its tests. It uses latest [ink! 3.4.0](https://github.com/paritytech/ink/tree/v3.4.0) & [Openbrush 2.3.0](https://github.com/Supercolony-net/openbrush-contracts/tree/v2.3.0)
-The UI template is in active development and will be public in January 23
+This repository host the first version of DEX. For latest DEX please go to the new repository: [Swanky dApps - DEX](https://github.com/swanky-dapps/dex)
 
 ### Farming
 A farming dApp line by line implementation of [ArthSwap master chef](https://github.com/ArthSwap/ArthSwap-MasterChef) adapted from 

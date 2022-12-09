@@ -1,0 +1,13 @@
+diff --git a/node_modules/@supercolony/typechain-polkadot-parser/index.ts b/node_modules/@supercolony/typechain-polkadot-parser/index.ts
+index e4887a4..f1d9af6 100644
+--- a/node_modules/@supercolony/typechain-polkadot-parser/index.ts
++++ b/node_modules/@supercolony/typechain-polkadot-parser/index.ts
+@@ -406,7 +406,7 @@ ${event.args.map((arg) => {
+ 				`Result<${typeOk.tsReturnType}, ${typeErr.tsReturnType}>`,
+ 				`Result<${typeOk.tsArgTypePrefixed}, ${typeErr.tsArgTypePrefixed}>`,
+ 				`Result<${typeOk.tsReturnTypePrefixed}, ${typeErr.tsReturnTypePrefixed}>`,
+-				new TypeTS(`Result<${typeOk.typeDescription.name}, ${typeErr.typeDescription.name}`, false, true, {
++				new TypeTS(`Result<${typeOk.typeDescription.name}, ${typeErr.typeDescription.name}>`, false, false, {
+ 					'0': typeOk.typeDescription,
+ 					'1': typeErr.typeDescription,
+ 				}),

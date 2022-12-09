@@ -11,10 +11,16 @@ pub use crate::traits::{
 };
 use crate::{
     ensure,
-    helpers::math::casted_mul,
-    traits::master_chef::{
-        data::UserInfo,
-        errors::FarmingError,
+    helpers::{
+        helper::transfer_from_with_reentrancy,
+        math::casted_mul,
+    },
+    traits::{
+        block::BlockInfo,
+        master_chef::{
+            data::UserInfo,
+            errors::FarmingError,
+        },
     },
 };
 use ink_env::CallFlags;
@@ -40,7 +46,9 @@ pub const MAX_PERIOD: u32 = 23u32;
 pub const FIRST_PERIOD_REWERD_SUPPLY: Balance = 151629858171523000000u128;
 
 #[openbrush::trait_definition]
-pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + FarmingEvents {
+pub trait Farming:
+    Storage<Data> + Storage<ownable::Data> + FarmingGetters + FarmingEvents + BlockInfo
+{
     #[ink(message)]
     #[modifiers(only_owner)]
     fn add(
@@ -64,11 +72,12 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
                 .rewarders
                 .insert(&pool_length, &rewarder_address);
         }
+        let block_number = self.block_number();
         self.data::<Data>().pool_info.insert(
             &pool_length,
             &Pool {
                 acc_arsw_per_share: 0,
-                last_reward_block: Self::env().block_number(),
+                last_reward_block: block_number,
                 alloc_point,
             },
         );
@@ -89,10 +98,10 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         rewarder: Option<AccountId>,
         overwrite: bool,
     ) -> Result<(), FarmingError> {
+        self._update_all_pools()?;
         let pool_info = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_all_pools()?;
         self.data::<Data>().total_alloc_point = self
             .get_total_alloc_point()
             .checked_sub(pool_info.alloc_point)
@@ -135,7 +144,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         let mut acc_arsw_per_share = pool.acc_arsw_per_share;
 
         let lp_supply = self._get_lp_supply(pool_id)?;
-        let current_block = Self::env().block_number();
+        let current_block = self.block_number();
 
         if current_block > pool.last_reward_block && lp_supply != 0 {
             let additional_acc_arsw_per_share =
@@ -165,7 +174,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_pool(pool_id)?;
+        self.update_pool(pool_id)?;
         let user = self.get_user_info(pool_id, to).unwrap_or_default();
         let user_amount = user
             .amount
@@ -196,12 +205,11 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         let lp_token = self
             .get_lp_token(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        PSP22Ref::transfer_from(
-            &lp_token,
+        transfer_from_with_reentrancy(
+            lp_token,
             Self::env().caller(),
             Self::env().account_id(),
             amount,
-            Vec::new(),
         )?;
         self._emit_deposit_event(Self::env().caller(), pool_id, amount, to);
         Ok(())
@@ -215,10 +223,10 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         to: AccountId,
     ) -> Result<(), FarmingError> {
         ensure!(amount > 0, FarmingError::ZeroWithdrawal);
+        self.update_pool(pool_id)?;
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_pool(pool_id)?;
         let caller = Self::env().caller();
         let user = self
             .get_user_info(pool_id, caller)
@@ -263,7 +271,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_pool(pool_id)?;
+        self.update_pool(pool_id)?;
         let caller = Self::env().caller();
         let user = self
             .get_user_info(pool_id, caller)
@@ -320,7 +328,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         let pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        self._update_pool(pool_id)?;
+        self.update_pool(pool_id)?;
         let caller = Self::env().caller();
         let user = self
             .get_user_info(pool_id, caller)
@@ -422,7 +430,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         .call_flags(CallFlags::default().set_allow_reentry(true))
         .fire()
         .unwrap()?;
-        self._emit_deposit_arsw_event(Self::env().block_number(), amount);
+        self._emit_deposit_arsw_event(self.block_number(), amount);
         Ok(())
     }
 
@@ -438,16 +446,17 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
     fn _update_all_pools(&mut self) -> Result<(), FarmingError> {
         let lp_tokens = &self.data::<Data>().lp_tokens;
         for i in 0..lp_tokens.len() {
-            self._update_pool(i as u32)?;
+            self.update_pool(i as u32)?;
         }
         Ok(())
     }
 
-    fn _update_pool(&mut self, pool_id: u32) -> Result<(), FarmingError> {
+    #[ink(message)]
+    fn update_pool(&mut self, pool_id: u32) -> Result<(), FarmingError> {
         let mut pool = self
             .get_pool_info(pool_id)
             .ok_or(FarmingError::PoolNotFound)?;
-        let current_block = Self::env().block_number();
+        let current_block = self.block_number();
         if current_block > pool.last_reward_block {
             let lp_supply = self._get_lp_supply(pool_id)?;
             if lp_supply > 0 {
@@ -478,17 +487,17 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         lp_supply: Balance,
     ) -> Result<Balance, FarmingError> {
         ensure!(lp_supply > 0, FarmingError::LpSupplyIsZero);
-        let current_period = self._get_period(current_block)?;
+        let current_period = self.get_period(current_block)?;
         let mut arsw_reward: Balance = 0;
         let mut last_block = pool_info.last_reward_block;
-        let last_reward_block_period = self._get_period(last_block)?;
+        let last_reward_block_period = self.get_period(last_block)?;
         let mut period = last_reward_block_period;
         let total_alloc_point = self.get_total_alloc_point();
         while period <= current_period {
             if period > MAX_PERIOD {
                 break
             }
-            if current_block <= self._period_max(period)? {
+            if current_block <= self.period_max(period)? {
                 arsw_reward = arsw_reward
                     .checked_add(
                         casted_mul(
@@ -497,7 +506,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
                                 .ok_or(FarmingError::SubUnderflow2)?
                                 as u128
                                 * pool_info.alloc_point as u128,
-                            self._arsw_per_block(period)?,
+                            self.arsw_per_block(period)?,
                         )
                         .checked_div(total_alloc_point.into())
                         .ok_or(FarmingError::DivByZero1)?
@@ -509,12 +518,12 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
                 arsw_reward = arsw_reward
                     .checked_add(
                         casted_mul(
-                            self._period_max(period)?
+                            self.period_max(period)?
                                 .checked_sub(last_block.into())
                                 .ok_or(FarmingError::SubUnderflow3)?
                                 as u128
                                 * pool_info.alloc_point as u128,
-                            self._arsw_per_block(period)? as u128,
+                            self.arsw_per_block(period)? as u128,
                         )
                         .checked_div(total_alloc_point.into())
                         .ok_or(FarmingError::DivByZero2)?
@@ -523,7 +532,7 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
                     )
                     .ok_or(FarmingError::AddOverflow5)?;
 
-                last_block = self._period_max(period)?;
+                last_block = self.period_max(period)?;
             }
 
             period += 1;
@@ -535,7 +544,8 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
         )
     }
 
-    fn _get_period(&self, block_number: u32) -> Result<u32, FarmingError> {
+    #[ink(message)]
+    fn get_period(&self, block_number: u32) -> Result<u32, FarmingError> {
         let farming_origin_block = self.get_farming_origin_block();
         ensure!(
             block_number >= farming_origin_block,
@@ -549,7 +559,8 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
             / BLOCK_PER_PERIOD)
     }
 
-    fn _period_max(&self, period: u32) -> Result<u32, FarmingError> {
+    #[ink(message)]
+    fn period_max(&self, period: u32) -> Result<u32, FarmingError> {
         Ok(self
             .get_farming_origin_block()
             .checked_add(
@@ -561,7 +572,8 @@ pub trait Farming: Storage<Data> + Storage<ownable::Data> + FarmingGetters + Far
             - 1)
     }
 
-    fn _arsw_per_block(&self, period: u32) -> Result<Balance, FarmingError> {
+    #[ink(message)]
+    fn arsw_per_block(&self, period: u32) -> Result<Balance, FarmingError> {
         if period > MAX_PERIOD {
             return Ok(0)
         }

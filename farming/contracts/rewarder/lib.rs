@@ -25,7 +25,7 @@ pub mod rewarder {
     impl Rewarderontract {
         #[ink(constructor)]
         pub fn new(
-            reward_multiplier: u32,
+            reward_multiplier: Balance,
             reward_token: AccountId,
             master_chef: AccountId,
         ) -> Self {

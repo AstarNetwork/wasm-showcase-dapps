@@ -1,5 +1,5 @@
 [package]
-name = "farming"
+name = "master_chef_mock"
 version = "0.1.0"
 authors = ["Stake Technologies <devops@stake.co.jp>"]
 edition = "2021"
@@ -15,15 +15,13 @@ ink_prelude = { version = "3.4.0", default-features = false }
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
 
-primitive-types = { version = "0.11.1", default-features = false, features = ["codec"] }
-openbrush = { tag = "v2.3.0", git = "https://github.com/Supercolony-net/openbrush-contracts", default-features = false, features = ["psp22", "ownable"] }
+openbrush = { tag = "v2.3.0", git = "https://github.com/Supercolony-net/openbrush-contracts", default-features = false, features = ["ownable"] }
+farming = { path = "../../logics", default-features = false }
 
 [lib]
-name = "farming"
+name = "master_chef_mock"
 path = "lib.rs"
-crate-type = [
-    "rlib",
-]
+crate-type = ["cdylib"]
 
 [features]
 default = ["std"]
@@ -38,5 +36,11 @@ std = [
     "scale-info",
     "scale-info/std",
     "openbrush/std",
-    "primitive-types/std"
+    "farming/std"
 ]
+
+[profile.dev]
+overflow-checks = false
+
+[profile.release]
+overflow-checks = false

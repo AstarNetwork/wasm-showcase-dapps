@@ -2,10 +2,11 @@
 #![feature(min_specialization)]
 
 #[openbrush::contract]
-pub mod master_chef_contract {
+pub mod master_chef_mock {
     use farming::traits::{
         block::BlockInfo,
         master_chef::{
+            errors::FarmingError,
             events::*,
             farming::*,
             getters::*,
@@ -109,13 +110,14 @@ pub mod master_chef_contract {
         farming: Data,
         #[storage_field]
         ownable: ownable::Data,
+        block_number: BlockNumber,
     }
 
     impl Farming for FarmingContract {}
 
     impl BlockInfo for FarmingContract {
         fn block_number(&self) -> BlockNumber {
-            self.env().block_number()
+            self.block_number
         }
     }
 
@@ -236,7 +238,34 @@ pub mod master_chef_contract {
                 instance._init_with_owner(caller);
                 instance.farming.arsw_token = arsw_token;
                 instance.farming.farming_origin_block = Self::env().block_number();
+                instance.block_number = Self::env().block_number();
             })
+        }
+        #[ink(message)]
+        pub fn increase_block_number(&mut self, offset: BlockNumber) {
+            self.block_number += offset
+        }
+
+        #[ink(message)]
+        pub fn get_block_number(&self) -> BlockNumber {
+            self.block_number()
+        }
+
+        #[ink(message)]
+        pub fn calculate_additional_acc_arsw_per_share_test(
+            &self,
+            acc_arsw_per_share: Balance,
+            last_reward_block: BlockNumber,
+            alloc_point: u32,
+            current_block: BlockNumber,
+            lp_supply: Balance,
+        ) -> Result<Balance, FarmingError> {
+            let pool = Pool {
+                acc_arsw_per_share,
+                last_reward_block,
+                alloc_point,
+            };
+            self._calculate_additional_acc_arsw_per_share(&pool, current_block, lp_supply)
         }
     }
 }

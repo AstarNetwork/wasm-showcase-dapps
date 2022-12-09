@@ -16,6 +16,7 @@ import abiData from './abi'
 
 const WS_PROVIDER = 'ws://127.0.0.1:9944'
 const gasLimit = 18750000000
+const proofSize = 1000
 const storageDepositLimit = null
 
 const Home: NextPage = () => {
@@ -58,8 +59,8 @@ const Home: NextPage = () => {
       address,
       {
         gasLimit: api.registry.createType('WeightV2', {
-          refTime: 18750000000,
-          proofSize: 1000,
+          refTime: gasLimit,
+          proofSize,
         }) as WeightV2,
         storageDepositLimit,
       }

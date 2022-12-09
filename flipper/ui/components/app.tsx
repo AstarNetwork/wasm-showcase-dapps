@@ -1,7 +1,8 @@
 import type { NextPage } from 'next'
 import { useState, useCallback } from 'react'
-import { ApiPromise, Keyring, WsProvider } from '@polkadot/api'
+import { ApiPromise, WsProvider } from '@polkadot/api'
 import { Abi, ContractPromise } from '@polkadot/api-contract'
+import type { WeightV2 } from '@polkadot/types/interfaces'
 import {
   web3Enable,
   isWeb3Injected,
@@ -15,6 +16,7 @@ import abiData from './abi'
 
 const WS_PROVIDER = 'ws://127.0.0.1:9944'
 const gasLimit = 18750000000
+const proofSize = 1000
 const storageDepositLimit = null
 
 const Home: NextPage = () => {
@@ -51,15 +53,20 @@ const Home: NextPage = () => {
     setAccount(event.target.value)
   }
 
-  const query = async (contract: ContractPromise, address: string) => {
+  const query = async (api: ApiPromise, contract: ContractPromise, address: string) => {
     // (We perform the send from an account, here using Alice's address)
     const { gasRequired, result, output } = await contract.query.get(
       address,
       {
-        gasLimit,
+        gasLimit: api.registry.createType('WeightV2', {
+          refTime: gasLimit,
+          proofSize,
+        }) as WeightV2,
         storageDepositLimit,
       }
     )
+
+    // const result = await api.call.contractsApi.call(address, contract.address, 0, null, null, msg.toU8a(msg.args.map((_) => account.address)))
 
     // The actual result from RPC as `ContractExecResult`
     console.log(result.toHuman())
@@ -107,7 +114,7 @@ const Home: NextPage = () => {
         }
       })
 
-    await query(contract, account)
+    await query(api, contract, address)
   }
 
 
@@ -125,14 +132,14 @@ const Home: NextPage = () => {
             Flipper Contract
           </h3>
 
-          <button onClick={initSubstrateProvider}>Load Wallets</button>
+          <button onClick={initSubstrateProvider}>Load Wallets</button><br />
 
           <select onChange={handleOnSelect}>
             <option value="">Select Address</option>
             {accounts.map(account => (
               <option key={account.address} value={account.address}>{account.meta.name} {account.address}</option>
             ))}
-          </select>
+          </select><br />
 
           <button onClick={flip}>Flip</button>
 

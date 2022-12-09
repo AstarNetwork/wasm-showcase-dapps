@@ -16,7 +16,7 @@ import abiData from './abi'
 
 const WS_PROVIDER = 'ws://127.0.0.1:9944'
 const gasLimit = 18750000000
-const proofSize = 1000
+const proofSize = 131072
 const storageDepositLimit = null
 
 const Home: NextPage = () => {

@@ -1,0 +1,211 @@
+diff --git a/node_modules/@supercolony/typechain-polkadot/.DS_Store b/node_modules/@supercolony/typechain-polkadot/.DS_Store
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@supercolony/typechain-polkadot/package.json b/node_modules/@supercolony/typechain-polkadot/package.json
+index 9cab4ef..0685563 100644
+--- a/node_modules/@supercolony/typechain-polkadot/package.json
++++ b/node_modules/@supercolony/typechain-polkadot/package.json
+@@ -21,9 +21,8 @@
+   },
+   "engineStrict": true,
+   "dependencies": {
+-    "@polkadot/api": "^9.6.1",
+-    "@polkadot/api-contract": "^9.6.1",
+-    "@polkadot/keyring": "^9.6.1",
++    "@polkadot/api": "9.8.2",
++    "@polkadot/api-contract": "9.8.2",
+     "@supercolony/typechain-polkadot-parser": "0.2.0",
+     "@types/fs-extra": "^9.0.13",
+     "@types/node": "^17.0.34",
+diff --git a/node_modules/@supercolony/typechain-polkadot/src/templates/contract.hbs b/node_modules/@supercolony/typechain-polkadot/src/templates/contract.hbs
+index 55e761f..5992637 100644
+--- a/node_modules/@supercolony/typechain-polkadot/src/templates/contract.hbs
++++ b/node_modules/@supercolony/typechain-polkadot/src/templates/contract.hbs
+@@ -47,7 +47,7 @@ export default class Contract {
+ 		this.signer = signer;
+ 		this.contractAbi = new Abi(ABI);
+ 
+-		this.query = new QueryMethods(this.nativeContract, signer.address);
++		this.query = new QueryMethods(nativeAPI, this.nativeContract, signer.address);
+ 		this.buildExtrinsic = new BuildExtrinsicMethods(this.nativeContract);
+ 		this.tx = new TxSignAndSendMethods(nativeAPI, this.nativeContract, signer);
+ 		this.methods = new MixedMethods(nativeAPI, this.nativeContract, signer);
+diff --git a/node_modules/@supercolony/typechain-polkadot/src/templates/events.hbs b/node_modules/@supercolony/typechain-polkadot/src/templates/events.hbs
+index a8763bc..5feecd8 100644
+--- a/node_modules/@supercolony/typechain-polkadot/src/templates/events.hbs
++++ b/node_modules/@supercolony/typechain-polkadot/src/templates/events.hbs
+@@ -1,8 +1,9 @@
+ import type * as EventTypes from '../event-types/{{{fileName}}}';
++import EVENT_TYPE from '../event-data/{{{fileName}}}.json';
+ import type {ContractPromise} from "@polkadot/api-contract";
+ import type {ApiPromise} from "@polkadot/api";
+-import {getEventTypeDescription} from "../shared/utils";
+ import {handleEventReturn} from "@supercolony/typechain-types";
++export { EVENT_TYPE }
+ 
+ export default class EventsClass {
+ 	private __nativeContract : ContractPromise;
+@@ -25,7 +26,7 @@ export default class EventsClass {
+ 				_event[event.args[i]!.name] = args[i]!.toJSON();
+ 			}
+ 
+-			callback(handleEventReturn(_event, getEventTypeDescription('{{name}}', '{{../fileName}}')) as EventTypes.{{name}});
++			callback(handleEventReturn(_event, EVENT_TYPE['{{name}}']) as EventTypes.{{name}});
+ 		};
+ 
+ 		return this.__subscribeOnEvent(callbackWrapper, (eventName : string) => eventName == '{{name}}');
+diff --git a/node_modules/@supercolony/typechain-polkadot/src/templates/mixed-methods.hbs b/node_modules/@supercolony/typechain-polkadot/src/templates/mixed-methods.hbs
+index e0db57a..32f9a96 100644
+--- a/node_modules/@supercolony/typechain-polkadot/src/templates/mixed-methods.hbs
++++ b/node_modules/@supercolony/typechain-polkadot/src/templates/mixed-methods.hbs
+@@ -10,8 +10,8 @@ import { txSignAndSend } from '@supercolony/typechain-types';
+ import type * as ArgumentTypes from '../types-arguments/{{{fileName}}}';
+ import type * as ReturnTypes from '../types-returns/{{{fileName}}}';
+ import type BN from 'bn.js';
++import {TYPE} from "../query/{{{fileName}}}"
+ import {ReturnNumber} from '@supercolony/typechain-types';
+-import {getTypeDescription} from './../shared/utils';
+ // @ts-ignore
+ import type {EventRecord} from "@polkadot/api/submittable";
+ import {decodeEvents} from "../shared/utils";
+diff --git a/node_modules/@supercolony/typechain-polkadot/src/templates/query.hbs b/node_modules/@supercolony/typechain-polkadot/src/templates/query.hbs
+index c486fee..f9b7a27 100644
+--- a/node_modules/@supercolony/typechain-polkadot/src/templates/query.hbs
++++ b/node_modules/@supercolony/typechain-polkadot/src/templates/query.hbs
+@@ -1,27 +1,33 @@
+ /* This file is auto-generated */
+ 
+ import type { ContractPromise } from '@polkadot/api-contract';
++import type { ApiPromise } from '@polkadot/api';
++import type { WeightV2 } from '@polkadot/types/interfaces'
+ import type { GasLimit, GasLimitAndRequiredValue, Result } from '@supercolony/typechain-types';
+ import type { QueryReturnType } from '@supercolony/typechain-types';
+ import { queryJSON, queryOkJSON, handleReturnType } from '@supercolony/typechain-types';
+ import type * as ArgumentTypes from '../types-arguments/{{{fileName}}}';
+ import type * as ReturnTypes from '../types-returns/{{{fileName}}}';
+ import type BN from 'bn.js';
++import TYPE from '../data/{{{fileName}}}.json'
+ import {ReturnNumber} from '@supercolony/typechain-types';
+-import {getTypeDescription} from './../shared/utils';
+ {{#if additionalImports.length}}
+ {{#each additionalImports}}
+ import { {{#each values}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}} } from '{{{path}}}';
+ {{/each}}{{/if}}
+ 
++export { TYPE }
+ export default class Methods {
+ 	private __nativeContract : ContractPromise;
+ 	private __callerAddress : string;
++	private __apiPromise: ApiPromise;
+ 
+ 	constructor(
++		apiPromise: ApiPromise,
+ 		nativeContract : ContractPromise,
+ 		callerAddress : string,
+ 	) {
++		this.__apiPromise = apiPromise;
+ 		this.__nativeContract = nativeContract;
+ 		this.__callerAddress = callerAddress;
+ 	}
+@@ -41,7 +47,14 @@ export default class Methods {
+ 	{{/each}}
+ 		__options ? : {{#if payable}}GasLimitAndRequiredValue{{else}}GasLimit{{/if}},
+ 	){{{buildReturnType this}}}{
+-		return {{{buildReturn this}}} "{{{toCamelCaseForFunctions originalName}}}", [{{#each args}}{{{name}}}{{#unless @last}}, {{/unless}}{{/each}}], __options {{#buildWrapper this}}{{fileName}}{{/buildWrapper}});
++		__options = __options ?? {
++			{{#if payable}}value: 0,{{/if}}
++			gasLimit: this.__apiPromise.registry.createType('WeightV2', {
++				refTime: 6219235328,
++				proofSize: 131072,
++			}) as WeightV2
++		}
++		return {{{buildReturn this}}} "{{{toCamelCaseForFunctions originalName}}}", [{{#each args}}{{{name}}}{{#unless @last}}, {{/unless}}{{/each}}], __options {{{buildWrapper this}}});
+ 	}
+ 
+ {{/each}}
+diff --git a/node_modules/@supercolony/typechain-polkadot/src/templates/raw/shared/utils.ts b/node_modules/@supercolony/typechain-polkadot/src/templates/raw/shared/utils.ts
+index 20c205b..919e087 100644
+--- a/node_modules/@supercolony/typechain-polkadot/src/templates/raw/shared/utils.ts
++++ b/node_modules/@supercolony/typechain-polkadot/src/templates/raw/shared/utils.ts
+@@ -1,18 +1,7 @@
+-import fs from "fs";
+ import type {ContractPromise} from "@polkadot/api-contract";
+ import {handleEventReturn} from "@supercolony/typechain-types";
+ 
+-export function getTypeDescription(id: number | string, fileName: string): any {
+-	const types = JSON.parse(fs.readFileSync(__dirname + `/../data/${fileName}.json`, 'utf8'));
+-	return types[id];
+-}
+-
+-export function getEventTypeDescription(name: string, fileName: string): any {
+-	const types = JSON.parse(fs.readFileSync(__dirname + `/../event-data/${fileName}.json`, 'utf8'));
+-	return types[name];
+-}
+-
+-export function decodeEvents(events: any[], contract: ContractPromise, fileName: string): any[] {
++export function decodeEvents(events: any[], contract: ContractPromise, EVENT_TYPE: any): any[] {
+ 	return events.filter((record: any) => {
+ 		const { event } = record;
+ 
+@@ -30,7 +19,7 @@ export function decodeEvents(events: any[], contract: ContractPromise, fileName:
+ 			_event[event.args[i]!.name] = args[i]!.toJSON();
+ 		}
+ 
+-		handleEventReturn(_event, getEventTypeDescription(event.identifier.toString(), fileName));
++		handleEventReturn(_event, EVENT_TYPE[event.identifier.toString()]);
+ 
+ 		return {
+ 			name: event.identifier.toString(),
+diff --git a/node_modules/@supercolony/typechain-polkadot/src/templates/tx-sign-and-send.hbs b/node_modules/@supercolony/typechain-polkadot/src/templates/tx-sign-and-send.hbs
+index c73e4b8..c099ad1 100644
+--- a/node_modules/@supercolony/typechain-polkadot/src/templates/tx-sign-and-send.hbs
++++ b/node_modules/@supercolony/typechain-polkadot/src/templates/tx-sign-and-send.hbs
+@@ -2,6 +2,7 @@
+ 
+ import type { ContractPromise } from '@polkadot/api-contract';
+ import type { KeyringPair } from '@polkadot/keyring/types';
++import type { SignerOptions } from '@polkadot/api/submittable/types';
+ import type { ApiPromise } from '@polkadot/api';
+ import type { GasLimit, GasLimitAndRequiredValue, Result } from '@supercolony/typechain-types';
+ import { txSignAndSend } from '@supercolony/typechain-types';
+@@ -10,6 +11,7 @@ import type BN from 'bn.js';
+ // @ts-ignore
+ import type {EventRecord} from "@polkadot/api/submittable";
+ import {decodeEvents} from "../shared/utils";
++import { EVENT_TYPE } from "../events/{{{fileName}}}";
+ {{#if additionalImports.length}}
+ {{#each additionalImports}}
+ import { {{#each values}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}} } from '{{{path}}}';
+@@ -43,10 +45,11 @@ export default class Methods {
+ 		{{{name}}}: {{{type.tsStr}}},
+ 	{{/each}}
+ 		__options ? : {{#if payable}}GasLimitAndRequiredValue{{else}}GasLimit{{/if}},
++		__signerOptions ? : Partial<SignerOptions>,
+ 	){{{buildReturnType this}}}{
+ 		return {{{buildReturn this}}} "{{{toCamelCaseForFunctions originalName}}}", (events: EventRecord) => {
+-			return decodeEvents(events, this.__nativeContract, "{{../fileName}}");
+-		}, [{{#each args}}{{{name}}}{{#unless @last}}, {{/unless}}{{/each}}], __options);
++			return decodeEvents(events, this.__nativeContract, EVENT_TYPE);
++		}, [{{#each args}}{{{name}}}{{#unless @last}}, {{/unless}}{{/each}}], __options, __signerOptions);
+ 	}
+ 
+ {{/each}}
+diff --git a/node_modules/@supercolony/typechain-polkadot/src/utils/handlebars-helpers.ts b/node_modules/@supercolony/typechain-polkadot/src/utils/handlebars-helpers.ts
+index 1c9678b..42864dc 100644
+--- a/node_modules/@supercolony/typechain-polkadot/src/utils/handlebars-helpers.ts
++++ b/node_modules/@supercolony/typechain-polkadot/src/utils/handlebars-helpers.ts
+@@ -88,12 +88,12 @@ Handlebars.registerHelper( 'buildReturnType', function(fn: Method) {
+ 	return '';
+ });
+ 
+-Handlebars.registerHelper('buildWrapper', function(fn: Method, fileName: any) {
++Handlebars.registerHelper('buildWrapper', function(fn: Method) {
+ 	if(fn.methodType == 'query' && fn.returnType?.tsStr == 'ReturnNumber') {
+ 		return ', (result) => { return new ReturnNumber(result as (number | string)); }';
+ 	}
+ 	if(fn.methodType == 'query' && fn.returnType && fn.returnType?.tsStr !== 'null' && fn.returnType?.tsStr !== 'number' && fn.returnType?.tsStr !== 'string' && fn.returnType?.tsStr !== 'boolean') {
+-		return `, (result) => { return handleReturnType(result, getTypeDescription(${fn.returnType?.id}, '${fileName.data.root.fileName}')); }`;
++		return `, (result) => { return handleReturnType(result, TYPE[${fn.returnType?.id}]); }`;
+ 	}
+ });
+ 

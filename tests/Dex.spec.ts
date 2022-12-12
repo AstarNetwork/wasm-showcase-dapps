@@ -15,6 +15,7 @@ import { AccountId, Hash } from 'types-arguments/factory_contract';
 import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { emit, revertedWith } from './helpers';
+import type { WeightV2 } from '@polkadot/types/interfaces'
 
 const zeroAddress = encodeAddress(
   '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -38,7 +39,7 @@ describe('Dex spec', () => {
   let [token0, token1]: Token[] = [];
   let wnative: Wnative;
 
-  let gasRequired: bigint;
+  let gasRequired: bigint | WeightV2;
 
   async function setup(): Promise<void> {
     ({ api, alice: deployer, bob: wallet } = globalThis.setup);

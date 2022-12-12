@@ -1,10 +1,7 @@
 import { ReturnNumber } from '@supercolony/typechain-types';
 import Token from '../types/contracts/psp22_token';
 import { expect } from '@jest/globals';
-
-export function parseUnits(amount: bigint | number, decimals = 18): bigint {
-  return BigInt(amount) * 10n ** BigInt(decimals);
-}
+export { parseUnits } from './utils';
 
 export function emit(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

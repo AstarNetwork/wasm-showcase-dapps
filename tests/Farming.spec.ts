@@ -6,7 +6,7 @@ import Farming from '../types/contracts/master_chef_mock';
 import Rewarder from '../types/contracts/rewarder_contract';
 import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { changeTokenBalances, emit, parseUnits, revertedWith } from './helpers';
+import { changeTokenBalances, emit, parseUnits, revertedWith } from './testHelpers';
 import { expect } from '@jest/globals';
 
 describe('Farming', () => {

@@ -69,7 +69,7 @@ index e0db57a..32f9a96 100644
  import type {EventRecord} from "@polkadot/api/submittable";
  import {decodeEvents} from "../shared/utils";
 diff --git a/node_modules/@supercolony/typechain-polkadot/src/templates/query.hbs b/node_modules/@supercolony/typechain-polkadot/src/templates/query.hbs
-index c486fee..f9b7a27 100644
+index c486fee..c27dc4a 100644
 --- a/node_modules/@supercolony/typechain-polkadot/src/templates/query.hbs
 +++ b/node_modules/@supercolony/typechain-polkadot/src/templates/query.hbs
 @@ -1,27 +1,33 @@
@@ -112,12 +112,12 @@ index c486fee..f9b7a27 100644
  		__options ? : {{#if payable}}GasLimitAndRequiredValue{{else}}GasLimit{{/if}},
  	){{{buildReturnType this}}}{
 -		return {{{buildReturn this}}} "{{{toCamelCaseForFunctions originalName}}}", [{{#each args}}{{{name}}}{{#unless @last}}, {{/unless}}{{/each}}], __options {{#buildWrapper this}}{{fileName}}{{/buildWrapper}});
-+		__options = __options ?? {
-+			{{#if payable}}value: 0,{{/if}}
++		__options = {
 +			gasLimit: this.__apiPromise.registry.createType('WeightV2', {
 +				refTime: 6219235328,
 +				proofSize: 131072,
-+			}) as WeightV2
++			}) as WeightV2,
++			...(__options ?? { {{#if payable}}value: 0{{/if}} }),
 +		}
 +		return {{{buildReturn this}}} "{{{toCamelCaseForFunctions originalName}}}", [{{#each args}}{{{name}}}{{#unless @last}}, {{/unless}}{{/each}}], __options {{{buildWrapper this}}});
  	}

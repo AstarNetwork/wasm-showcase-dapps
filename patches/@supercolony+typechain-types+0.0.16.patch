@@ -169,7 +169,7 @@ index 917eefa..cfcb908 100644
  //# sourceMappingURL=tx.d.ts.map
 \ No newline at end of file
 diff --git a/node_modules/@supercolony/typechain-types/dist/src/tx.js b/node_modules/@supercolony/typechain-types/dist/src/tx.js
-index e0685f6..4991425 100644
+index e0685f6..90888c8 100644
 --- a/node_modules/@supercolony/typechain-types/dist/src/tx.js
 +++ b/node_modules/@supercolony/typechain-types/dist/src/tx.js
 @@ -67,9 +67,9 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
@@ -193,7 +193,7 @@ index e0685f6..4991425 100644
      return __awaiter(this, void 0, void 0, function () {
          var signerAddress;
          return __generator(this, function (_a) {
-@@ -103,7 +103,9 @@ function _signAndSend(registry, extrinsic, signer, eventHandler) {
+@@ -103,11 +103,13 @@ function _signAndSend(registry, extrinsic, signer, eventHandler) {
                          txHash: extrinsic.hash.toHex(),
                      };
                      extrinsic
@@ -204,6 +204,11 @@ index e0685f6..4991425 100644
                          if (result.status.isInBlock) {
                              actionStatus.blockHash = result.status.asInBlock.toHex();
                          }
+-                        if (result.status.isFinalized || result.status.isInBlock) {
++                        if (result.status.isFinalized) {
+                             actionStatus.events = eventHandler(result.events);
+                             result.events
+                                 .filter(function (_a) {
 diff --git a/node_modules/@supercolony/typechain-types/dist/src/types.d.ts b/node_modules/@supercolony/typechain-types/dist/src/types.d.ts
 index 1538d98..55920e8 100644
 --- a/node_modules/@supercolony/typechain-types/dist/src/types.d.ts

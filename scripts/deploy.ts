@@ -5,12 +5,14 @@ import Factory_factory from '../types/constructors/factory_contract';
 import Wnative_factory from '../types/constructors/wnative_contract';
 import Router_factory from '../types/constructors/router_contract';
 import Farming_factory from '../types/constructors/master_chef_contract';
+import Rewarder_factory from '../types/constructors/rewarder_contract';
 import Token from '../types/contracts/psp22_token';
 import Pair from '../types/contracts/pair_contract';
 import Factory from '../types/contracts/factory_contract';
 import Wnative from '../types/contracts/wnative_contract';
 import Router from '../types/contracts/router_contract';
 import Farming from '../types/contracts/master_chef_contract';
+import Rewarder from '../types/contracts/rewarder_contract';
 import { parseUnits } from '../tests/utils';
 import 'dotenv/config';
 
@@ -197,6 +199,30 @@ async function main(): Promise<void> {
 
   ({ gasRequired } = await farming.query.add(15, usdtSbyAddress, null));
   await farming.tx.add(10, usdtSbyAddress, null, {
+    gasLimit: gasRequired,
+  });
+
+  const { address: rewardAddress } = await tokenFactory.new(
+    totalSupply,
+    'Reward Token' as unknown as string[],
+    'REWARD' as unknown as string[],
+    18,
+  );
+  console.log('reward token address:', rewardAddress);
+  const reward = new Token(rewardAddress, deployer, api);
+  const rewarderFactory = new Rewarder_factory(api, deployer);
+  const { address: rewarderAddress } = await rewarderFactory.new(parseUnits(1).toString(), rewardAddress, farmingAddress);
+  console.log('rewarder address:', rewarderAddress);
+  const rewarder = new Rewarder(rewarderAddress, deployer, api);
+  ({ gasRequired } = await reward.query.mint(
+    rewarder.address,
+    parseUnits(1_000_000_000).toString(),
+  ));
+  await reward.tx.mint(rewarder.address, parseUnits(1_000_000_000).toString(), {
+    gasLimit: gasRequired,
+  });
+  ({ gasRequired } = await farming.query.set(1, 15, rewarder.address, true));
+  await farming.tx.set(1, 15, rewarder.address, true, {
     gasLimit: gasRequired,
   });
 }

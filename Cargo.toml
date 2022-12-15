@@ -3,7 +3,6 @@ members = [
     "uniswap-v2/contracts/**",
     "farming/contracts/**",
     "farming/mocks/*",
-#    "flipper/flipper/contracts/*" <- uncomment this if you want to use flipper
     "nft/contracts/shiden34",
 ]
 

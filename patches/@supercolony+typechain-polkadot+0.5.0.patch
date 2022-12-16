@@ -1,6 +1,3 @@
-diff --git a/node_modules/@supercolony/typechain-polkadot/.DS_Store b/node_modules/@supercolony/typechain-polkadot/.DS_Store
-new file mode 100644
-index 0000000..e69de29
 diff --git a/node_modules/@supercolony/typechain-polkadot/package.json b/node_modules/@supercolony/typechain-polkadot/package.json
 index 9cab4ef..0685563 100644
 --- a/node_modules/@supercolony/typechain-polkadot/package.json

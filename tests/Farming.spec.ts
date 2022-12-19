@@ -8,6 +8,7 @@ import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { changeTokenBalances, emit, parseUnits, revertedWith } from './testHelpers';
 import { expect } from '@jest/globals';
+import { scaleWeightV2 } from './utils';
 
 describe('Farming', () => {
   let api: ApiPromise;
@@ -159,7 +160,7 @@ describe('Farming', () => {
       const { gasRequired } = await farming.query.add(10, dummy.address, null);
       await advanceBlock();
       const result = await farming.tx.add(10, dummy.address, null, {
-        gasLimit: gasRequired * 2n,
+        gasLimit: scaleWeightV2(api, gasRequired, 2),
       });
       const { lastRewardBlock, accArswPerShare } = (
         await farming.query.getPoolInfo(0)
@@ -188,7 +189,7 @@ describe('Farming', () => {
       const { gasRequired } = await farming.query.updatePool(0);
       await advanceBlock();
       emit(
-        await farming.tx.updatePool(0, { gasLimit: gasRequired * 2n }),
+        await farming.tx.updatePool(0, { gasLimit: scaleWeightV2(api, gasRequired, 2) }),
         'LogUpdatePool',
         {
           poolId: 0,
@@ -211,7 +212,7 @@ describe('Farming', () => {
         false,
       );
       let result = await farming.tx.set(0, 10, dummy.address, false, {
-        gasLimit: gasRequired * 3n,
+        gasLimit: scaleWeightV2(api, gasRequired, 2),
       });
       emit(result, 'LogSetPool', {
         poolId: 0,
@@ -221,7 +222,7 @@ describe('Farming', () => {
       });
       ({ gasRequired } = await farming.query.set(0, 10, dummy.address, true));
       result = await farming.tx.set(0, 10, dummy.address, true, {
-        gasLimit: gasRequired * 2n,
+        gasLimit: scaleWeightV2(api, gasRequired, 2),
       });
       emit(result, 'LogSetPool', {
         poolId: 0,
@@ -242,7 +243,7 @@ describe('Farming', () => {
       const { gasRequired } = await farming.query.set(0, 1, null, true);
       await advanceBlock();
       const result = await farming.tx.set(0, 1, null, true, {
-        gasLimit: gasRequired * 3n,
+        gasLimit: scaleWeightV2(api, gasRequired, 3),
       });
       const { lastRewardBlock, accArswPerShare } = (
         await farming.query.getPoolInfo(0)
@@ -465,7 +466,7 @@ describe('Farming', () => {
   });
 
   async function advanceBlock(): Promise<void> {
-    await farming.tx.increaseBlockNumber(1, { gasLimit: 30_000_000_000n });
+    await farming.tx.increaseBlockNumber(1, { gasLimit: scaleWeightV2(api, api.consts.system.blockWeights['maxBlock'], 0.6) });
   }
   function getFirstBlock(period: number): number {
     return originBlock + BLOCK_PER_PERIOD * period;

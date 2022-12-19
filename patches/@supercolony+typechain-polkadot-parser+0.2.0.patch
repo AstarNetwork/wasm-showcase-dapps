@@ -1,5 +1,5 @@
 diff --git a/node_modules/@supercolony/typechain-polkadot-parser/index.ts b/node_modules/@supercolony/typechain-polkadot-parser/index.ts
-index e4887a4..f1d9af6 100644
+index e4887a4..25b8952 100644
 --- a/node_modules/@supercolony/typechain-polkadot-parser/index.ts
 +++ b/node_modules/@supercolony/typechain-polkadot-parser/index.ts
 @@ -406,7 +406,7 @@ ${event.args.map((arg) => {
@@ -11,3 +11,18 @@ index e4887a4..f1d9af6 100644
  					'0': typeOk.typeDescription,
  					'1': typeErr.typeDescription,
  				}),
+diff --git a/node_modules/@supercolony/typechain-polkadot-parser/package.json b/node_modules/@supercolony/typechain-polkadot-parser/package.json
+index bdc8dbd..69f0213 100644
+--- a/node_modules/@supercolony/typechain-polkadot-parser/package.json
++++ b/node_modules/@supercolony/typechain-polkadot-parser/package.json
+@@ -16,8 +16,8 @@
+   },
+   "homepage": "https://github.com/Supercolony-net/typechain-polkadot#readme",
+   "dependencies": {
+-    "@polkadot/api": "^9.6.1",
+-    "@polkadot/api-contract": "^9.6.1",
++    "@polkadot/api": "9.8.2",
++    "@polkadot/api-contract": "9.8.2",
+     "@types/bn.js": "^5.1.0",
+     "@types/node": "^18.0.3",
+     "typescript": "^4.7.4",

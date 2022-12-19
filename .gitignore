@@ -27,3 +27,5 @@ target/
 /types/
 
 .DS_Store
+
+.env

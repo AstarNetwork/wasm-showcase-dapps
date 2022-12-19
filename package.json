@@ -26,8 +26,8 @@
     "postinstall": "patch-package"
   },
   "resolutions": {
-    "@polkadot/api": "^9.6.1",
-    "@polkadot/api-contract": "^9.6.1"
+    "@polkadot/api": "9.10.2",
+    "@polkadot/api-contract": "9.10.2"
   },
   "devDependencies": {
     "dotenv": "^16.0.3"

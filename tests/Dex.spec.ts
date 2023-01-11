@@ -16,6 +16,7 @@ import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { emit, revertedWith } from './testHelpers';
 import type { WeightV2 } from '@polkadot/types/interfaces'
+import { scaleWeightV2 } from './utils';
 
 const zeroAddress = encodeAddress(
   '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -39,7 +40,7 @@ describe('Dex spec', () => {
   let [token0, token1]: Token[] = [];
   let wnative: Wnative;
 
-  let gasRequired: bigint | WeightV2;
+  let gasRequired: WeightV2;
 
   async function setup(): Promise<void> {
     ({ api, alice: deployer, bob: wallet } = globalThis.setup);
@@ -227,7 +228,7 @@ describe('Dex spec', () => {
       .query.burn(wallet.address));
     const result = await pair
       .withSigner(wallet)
-      .tx.burn(wallet.address, { gasLimit: gasRequired });
+      .tx.burn(wallet.address, { gasLimit: scaleWeightV2(api, gasRequired, 1.1) });
     const lockedToken1Balance = 2204;
     const lockedToken2Balance = 1820;
     emit(result, 'Burn', {
@@ -298,7 +299,7 @@ describe('Dex spec', () => {
       wallet.address,
       deadline,
       {
-        gasLimit: gasRequired,
+        gasLimit: scaleWeightV2(api, gasRequired, 1.1),
         value: 10000,
       },
     );
@@ -321,7 +322,7 @@ describe('Dex spec', () => {
       wallet.address,
       deadline,
       {
-        gasLimit: gasRequired,
+        gasLimit: scaleWeightV2(api, gasRequired, 1.1),
         value: 10000,
       },
     );
@@ -350,7 +351,7 @@ describe('Dex spec', () => {
       [wnative.address, token0.address],
       wallet.address,
       deadline,
-      { gasLimit: gasRequired },
+      { gasLimit: scaleWeightV2(api, gasRequired, 1.1) },
     );
   });
 
@@ -374,7 +375,7 @@ describe('Dex spec', () => {
       [wnative.address, token0.address],
       wallet.address,
       deadline,
-      { gasLimit: gasRequired },
+      { gasLimit: scaleWeightV2(api, gasRequired, 1.1) },
     );
   });
 
@@ -404,7 +405,7 @@ describe('Dex spec', () => {
       deployer.address,
       deadline,
       {
-        gasLimit: gasRequired,
+        gasLimit: scaleWeightV2(api, gasRequired, 1.1),
         value: 1000000000000000,
       },
     );
@@ -417,7 +418,7 @@ describe('Dex spec', () => {
     const deadline = '111111111111111111';
     ({ gasRequired } = await token0.query.approve(router.address, 10000));
     await token0.tx.approve(router.address, 10000, {
-      gasLimit: gasRequired,
+      gasLimit: scaleWeightV2(api, gasRequired, 2),
     });
     const lpToken = new Pair(
       (
@@ -427,7 +428,7 @@ describe('Dex spec', () => {
       api,
     );
     await lpToken.tx.approve(router.address, 10000, {
-      gasLimit: gasRequired,
+      gasLimit: scaleWeightV2(api, gasRequired, 2),
     });
     const balance = await getBalance(wallet.address);
     ({ gasRequired } = await router.query.removeLiquidityNative(
@@ -445,7 +446,7 @@ describe('Dex spec', () => {
       0,
       wallet.address,
       deadline,
-      { gasLimit: gasRequired },
+      { gasLimit: scaleWeightV2(api, gasRequired, 2) },
     );
     const afterBalance = await getBalance(wallet.address);
     expect(afterBalance.sub(balance).toNumber()).toBeGreaterThan(10000);

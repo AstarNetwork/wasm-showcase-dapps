@@ -1,4 +1,7 @@
+### This repository is not maintained anymore but stays here for legacy. All dApps were moved and are maintained in [Swanky dApps repository](https://github.com/orgs/swanky-dapps/repositories)
+
 # Astar WASM showcase dApps
+
 This repository contains examples of ink! contracts and their respective UIs that can be deployed on Astar network.
 If you are looking for unaudited production ready dApps (ink! + UI) this repo is for you.
 
